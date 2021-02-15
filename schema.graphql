@@ -1,0 +1,13 @@
+"""
+Indexer details
+"""
+type Indexer @entity {
+  "Eth address of Indexer"
+  id: ID!
+
+  "Time this indexer was created"
+  createdAt: Int
+
+  "Tokens staked in the protocol in GRT"
+  ownStake: BigDecimal
+}

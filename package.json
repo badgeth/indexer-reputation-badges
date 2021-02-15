@@ -1,0 +1,22 @@
+{
+  "name": "indexer-kpi-subgraph",
+  "version": "0.0.1",
+  "description": "A subgraph to track The Graph indexer KPI",
+  "repository": "https://github.com/mtahon/indexer-kpi-subgraph",
+  "author": "Mathieu TAHON <mathieu.tahon@noath.net>",
+  "license": "GPL-3.0-only",
+  "private": false,
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ mtahon/indexer-kpi"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "graphprotocol/graph-cli",
+    "typescript": "^4.1.5"
+  },
+  "dependencies": {
+    "@graphprotocol/contracts": "graphprotocol/contracts",
+    "@graphprotocol/graph-ts": "graphprotocol/graph-ts"
+  }
+}
