@@ -3,6 +3,12 @@ import {
   StakeWithdrawn,
   StakeSlashed,
   DelegationParametersUpdated,
+  StakeDelegated,
+  StakeDelegatedWithdrawn,
+  AllocationCreated,
+  AllocationCollected,
+  AllocationClosed,
+  RebateClaimed,
 } from '../../generated/Staking/Staking'
 
 import {
@@ -33,3 +39,32 @@ export function handleDelegationParametersUpdated(event: DelegationParametersUpd
   indexer.handleDelegationParametersUpdated(event)
 }
 
+export function handleStakeDelegated(event: StakeDelegated): void {
+  let indexer = new Indexer(event.params.indexer)
+  indexer.handleStakeDelegated(event)
+}
+
+export function handleStakeDelegatedWithdrawn(event: StakeDelegatedWithdrawn): void {
+  let indexer = new Indexer(event.params.indexer)
+  indexer.handleStakeDelegatedWithdrawn(event)
+}
+
+export function handleAllocationCreated(event: AllocationCreated): void {
+  let indexer = new Indexer(event.params.indexer)
+  indexer.handleAllocationCreated(event)
+}
+
+export function handleAllocationCollected(event: AllocationCollected): void {
+  //let indexer = new Indexer(event.params.indexer)
+  //indexer.handleAllocationCollected(event)
+}
+
+export function handleAllocationClosed(event: AllocationClosed): void {
+  let indexer = new Indexer(event.params.indexer)
+  indexer.handleAllocationClosed(event)
+}
+
+export function handleRebateClaimed(event: RebateClaimed): void {
+  //let indexer = new Indexer(event.params.indexer)
+  //indexer.handleRebateClaimed(event)
+}

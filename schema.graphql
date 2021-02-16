@@ -8,8 +8,26 @@ type Indexer @entity {
   "Unix Timestamp when this indexer was created"
   createdAtTimestamp: BigInt
 
-  "Tokens staked in the protocol in GRT"
+  "GRT Tokens staked in the protocol by the Indexer itself"
   ownStake: BigDecimal
+
+  "GRT Tokens delegated to the Indexer"
+  delegatedStake: BigDecimal
+
+  "GRT Tokens allocated by the Indexer in the protocol"
+  allocatedStake: BigDecimal
+
+  "Ratio of allocated tokens versus allocation capacity: betwen 0 and 1"
+  allocationRatio: BigDecimal
+
+  "Maximum GRT Tokens that can be delegated to this Indexer before overdelegation"
+  maximumDelegation: BigDecimal
+
+  "GRT Tokens delegated to this indexer versus maximum delegation"
+  delegationRatio: BigDecimal
+
+  "Flags if an Indexer is over delegated"
+  isOverDelegated: Boolean
 
   "Indexing Reward Cut Ratio: between 0 and 1"
   indexingRewardCutRatio: BigDecimal
