@@ -19,7 +19,12 @@ import {
   AllocationCreated,
   AllocationCollected,
   AllocationClosed,
+  RebateClaimed,
 } from '../../generated/Staking/Staking'
+
+import {
+  RewardsAssigned,
+} from '../../generated/RewardsManager/RewardsManager'
 
 import { tokenAmountToDecimal } from '../helpers/token'
 import { feeCutToDecimalRatio } from '../helpers/feeCut'
@@ -73,12 +78,19 @@ export class Indexer {
 
   // Defines the allocation ratio
   allocationRatio(): BigDecimal {
+    // Determine allocation capacity
     let allocationCapacity = this.ownStake()
     if(this.isOverDelegated()) {
       allocationCapacity = allocationCapacity.plus(this.maximumDelegation())
     } else {
       allocationCapacity = allocationCapacity.plus(this.delegatedStake())
     }
+
+    // Avoid zero division
+    if(allocationCapacity.equals(DECIMAL_ZERO)) {
+      return DECIMAL_ZERO
+    }
+
     return this.allocatedStake().div(allocationCapacity)
   }
 
@@ -161,17 +173,44 @@ export class Indexer {
   }
 
   // Handles an allocation collection
-  /* TODO: Check how the query fees are distributed
-  handleAllocationCollected(event: AllocationCollected): void {
-    let indexerCollectedQueryFeeTokens = tokenAmountToDecimal(event.params.rebateFees)
-    this.updateAllocatedStake(this.allocatedStake().plus(indexerCollectedQueryFeeTokens))
-  }
-  */
+  handleAllocationCollected(event: AllocationCollected): void {}
+  
 
   // Handles an allocation closure
   handleAllocationClosed(event: AllocationClosed): void {
     let indexerAllocationTokens = tokenAmountToDecimal(event.params.tokens)
     this.updateAllocatedStake(this.allocatedStake().minus(indexerAllocationTokens))
+  }
+
+  // Handle the assignment of reward
+  handleRewardsAssigned(event: RewardsAssigned): void {
+    // Determine the rewards
+    let rewardedIndexingTokens = tokenAmountToDecimal(event.params.amount)
+    let indexerIndexingRewards = DECIMAL_ZERO
+    let delegatorIndexingRewards = DECIMAL_ZERO
+
+    // If nothing is delegated, everything is for the Indexer
+    if(this.delegatedStake().equals(DECIMAL_ZERO)) {
+      indexerIndexingRewards = rewardedIndexingTokens
+    } 
+    
+    // Otherwise it is split as per the cut
+    else {
+      indexerIndexingRewards = rewardedIndexingTokens.times(this.indexerEntity.indexingRewardCutRatio as BigDecimal)
+      delegatorIndexingRewards = rewardedIndexingTokens.minus(indexerIndexingRewards)
+    }
+
+    // Update the stakes since they are compounded
+    this.updateOwnStake(this.ownStake().plus(indexerIndexingRewards))
+    this.updateDelegatedStake(this.delegatedStake().plus(delegatorIndexingRewards))
+  }
+
+  // Handles a rebate claim (=Query Fees)
+  // NOTE: If the Indexer part is re-staked, it is handled in the StakeDeposit event
+  handleRebateClaimed(event: RebateClaimed): void {
+    // Increase the delegated tokens as they are automatically compounded
+    let delegationFees = tokenAmountToDecimal(event.params.delegationFees)
+    this.updateDelegatedStake(this.delegatedStake().plus(delegationFees))
   }
 
   // Handle a change in Indexer delegation parameters

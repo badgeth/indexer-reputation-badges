@@ -55,8 +55,8 @@ export function handleAllocationCreated(event: AllocationCreated): void {
 }
 
 export function handleAllocationCollected(event: AllocationCollected): void {
-  //let indexer = new Indexer(event.params.indexer)
-  //indexer.handleAllocationCollected(event)
+  let indexer = new Indexer(event.params.indexer)
+  indexer.handleAllocationCollected(event)
 }
 
 export function handleAllocationClosed(event: AllocationClosed): void {
@@ -65,6 +65,6 @@ export function handleAllocationClosed(event: AllocationClosed): void {
 }
 
 export function handleRebateClaimed(event: RebateClaimed): void {
-  //let indexer = new Indexer(event.params.indexer)
-  //indexer.handleRebateClaimed(event)
+  let indexer = new Indexer(event.params.indexer)
+  indexer.handleRebateClaimed(event)
 }

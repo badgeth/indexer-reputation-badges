@@ -18,6 +18,7 @@ dataSources:
       file: ./src/mappings/staking.ts
       entities:
         - Indexer
+        - IndexerUpdate
       abis:
         - name: Staking
           file: ./abis/Staking.json
@@ -42,3 +43,23 @@ dataSources:
           handler: handleAllocationClosed
         - event: RebateClaimed(indexed address,indexed bytes32,indexed address,uint256,uint256,uint256,uint256,uint256)
           handler: handleRebateClaimed
+  - kind: ethereum/contract
+    name: RewardsManager
+    network: mainnet
+    source:
+      address: '0x9Ac758AB77733b4150A901ebd659cbF8cB93ED66'
+      abi: RewardsManager
+      startBlock: 11446790
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/mappings/rewardsManager.ts
+      entities:
+        - Indexer
+      abis:
+        - name: RewardsManager
+          file: ./abis/RewardsManager.json
+      eventHandlers:
+        - event: RewardsAssigned(indexed address,indexed address,uint256,uint256)
+          handler: handleRewardsAssigned
