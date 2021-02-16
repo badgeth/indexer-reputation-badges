@@ -6,7 +6,7 @@ type Indexer @entity {
   id: ID!
 
   "Unix Timestamp when this indexer was created"
-  createdAt: Int
+  createdAt: BigInt
 
   "Tokens staked in the protocol in GRT"
   ownStake: BigDecimal

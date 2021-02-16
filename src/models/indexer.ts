@@ -1,6 +1,5 @@
 import { 
   Address,
-  BigDecimal,
   BigInt,
 } from "@graphprotocol/graph-ts"
 
@@ -15,9 +14,9 @@ import {
   DelegationParametersUpdated,
 } from '../../generated/Staking/Staking'
 
-import { TokenStake } from './tokenStake'
-
-let FEE_CUT_DIVIDER = BigDecimal.fromString('1000000')
+import { tokenAmountToDecimal } from '../helpers/token'
+import { feeCutToDecimalRatio } from '../helpers/feeCut'
+import { DECIMAL_ZERO, INT_ZERO } from '../helpers/constants'
 
 // A class to manage Indexer
 export class Indexer {
@@ -28,7 +27,7 @@ export class Indexer {
     let indexerEntity = IndexerEntity.load(address.toHex())
     if(indexerEntity == null) {
       indexerEntity = new IndexerEntity(address.toHex())
-      indexerEntity.ownStake = new BigDecimal(BigInt.fromI32(0))
+      indexerEntity.ownStake = DECIMAL_ZERO
     }
     this.indexerEntity = indexerEntity as IndexerEntity
   }
@@ -36,39 +35,39 @@ export class Indexer {
   // Handles a stake deposit
   handleStakeDeposited(event: StakeDeposited): void {
     // Update the creation time when it is the first stake
-    if(this.indexerEntity.ownStake.equals(new BigDecimal(BigInt.fromI32(0)))) {
+    if(this.indexerEntity.ownStake.equals(DECIMAL_ZERO)) {
       this.indexerEntity.createdAt = event.block.timestamp
     }
 
     // Update the deposit
-    let indexerStakeDeposited = TokenStake.fromRawTokens(event.params.tokens)
-    this.indexerEntity.ownStake = this.indexerEntity.ownStake.plus(indexerStakeDeposited.toBigDecimal())
+    let indexerStakeDeposited = tokenAmountToDecimal(event.params.tokens)
+    this.indexerEntity.ownStake = this.indexerEntity.ownStake.plus(indexerStakeDeposited)
     this.indexerEntity.save()
   }
 
   // Handles a stake withdrawl
   handleStakeWithdrawn(event: StakeWithdrawn): void {
-    let indexerStakeWithdrawn = TokenStake.fromRawTokens(event.params.tokens)
-    this.indexerEntity.ownStake = this.indexerEntity.ownStake.minus(indexerStakeWithdrawn.toBigDecimal())
+    let indexerStakeWithdrawn = tokenAmountToDecimal(event.params.tokens)
+    this.indexerEntity.ownStake = this.indexerEntity.ownStake.minus(indexerStakeWithdrawn)
     this.indexerEntity.save()
   }
 
   // Handles a stake slashing
   handleStakeSlashed(event: StakeSlashed): void {
-    let indexerStakeSlashed = TokenStake.fromRawTokens(event.params.tokens)
-    this.indexerEntity.ownStake = this.indexerEntity.ownStake.minus(indexerStakeSlashed.toBigDecimal())
+    let indexerStakeSlashed = tokenAmountToDecimal(event.params.tokens)
+    this.indexerEntity.ownStake = this.indexerEntity.ownStake.minus(indexerStakeSlashed)
     this.indexerEntity.save()
   }
 
   // Handle a change in Indexer delegation parameters
   handleDelegationParametersUpdated(event: DelegationParametersUpdated): void {
     // Update the query fee ratios
-    this.indexerEntity.indexingRewardCutRatio = new BigDecimal(event.params.indexingRewardCut).div(FEE_CUT_DIVIDER)
-    this.indexerEntity.queryFeeCutRatio = new BigDecimal(event.params.queryFeeCut).div(FEE_CUT_DIVIDER)
+    this.indexerEntity.indexingRewardCutRatio = feeCutToDecimalRatio(event.params.indexingRewardCut)
+    this.indexerEntity.queryFeeCutRatio = feeCutToDecimalRatio(event.params.queryFeeCut)
     
     // Update the cooldown block
     if(event.params.cooldownBlocks.isZero()) {
-      this.indexerEntity.delegatorParameterCooldownBlock = BigInt.fromI32(0)
+      this.indexerEntity.delegatorParameterCooldownBlock = INT_ZERO
     } else {
       this.indexerEntity.delegatorParameterCooldownBlock = event.block.number.plus(event.params.cooldownBlocks)
     }
