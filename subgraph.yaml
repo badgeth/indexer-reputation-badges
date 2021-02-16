@@ -24,3 +24,9 @@ dataSources:
       eventHandlers:
         - event: StakeDeposited(indexed address,uint256)
           handler: handleStakeDeposited
+        - event: StakeWithdrawn(indexed address,uint256)
+          handler: handleStakeWithdrawn
+        - event: StakeSlashed(indexed address,uint256,uint256,address)
+          handler: handleStakeSlashed
+        - event: DelegationParametersUpdated(indexed address,uint32,uint32,uint32)
+          handler: handleDelegationParametersUpdated

@@ -10,4 +10,15 @@ type Indexer @entity {
 
   "Tokens staked in the protocol in GRT"
   ownStake: BigDecimal
+
+  "Indexing Reward Cut"
+  indexingRewardCut: BigDecimal
+
+  "Query Fee Cut"
+  queryFeeCut: BigDecimal
+
+  "Block until the Delegator Parameters can not be modified"
+  delegatorParameterCooldownBlock: BigInt
+
+
 }
