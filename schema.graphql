@@ -5,20 +5,19 @@ type Indexer @entity {
   "Eth address of Indexer"
   id: ID!
 
-  "Time this indexer was created"
+  "Unix Timestamp when this indexer was created"
   createdAt: Int
 
   "Tokens staked in the protocol in GRT"
   ownStake: BigDecimal
 
-  "Indexing Reward Cut"
-  indexingRewardCut: BigDecimal
+  "Indexing Reward Cut Ratio: between 0 and 1"
+  indexingRewardCutRatio: BigDecimal
 
-  "Query Fee Cut"
-  queryFeeCut: BigDecimal
+  "Query Fee Cut Ratio: between 0 and 1"
+  queryFeeCutRatio: BigDecimal
 
   "Block until the Delegator Parameters can not be modified"
   delegatorParameterCooldownBlock: BigInt
-
 
 }

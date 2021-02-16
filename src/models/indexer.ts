@@ -17,6 +17,8 @@ import {
 
 import { TokenStake } from './tokenStake'
 
+let FEE_CUT_DIVIDER = BigDecimal.fromString('1000000')
+
 // A class to manage Indexer
 export class Indexer {
   indexerEntity: IndexerEntity
@@ -33,6 +35,12 @@ export class Indexer {
 
   // Handles a stake deposit
   handleStakeDeposited(event: StakeDeposited): void {
+    // Update the creation time when it is the first stake
+    if(this.indexerEntity.ownStake.equals(new BigDecimal(BigInt.fromI32(0)))) {
+      this.indexerEntity.createdAt = event.block.timestamp
+    }
+
+    // Update the deposit
     let indexerStakeDeposited = TokenStake.fromRawTokens(event.params.tokens)
     this.indexerEntity.ownStake = this.indexerEntity.ownStake.plus(indexerStakeDeposited.toBigDecimal())
     this.indexerEntity.save()
@@ -54,9 +62,18 @@ export class Indexer {
 
   // Handle a change in Indexer delegation parameters
   handleDelegationParametersUpdated(event: DelegationParametersUpdated): void {
-    this.indexerEntity.indexingRewardCut = new BigDecimal(event.params.indexingRewardCut)
-    this.indexerEntity.queryFeeCut = new BigDecimal(event.params.queryFeeCut)
-    this.indexerEntity.delegatorParameterCooldownBlock = event.block.number.plus(event.params.cooldownBlocks)
+    // Update the query fee ratios
+    this.indexerEntity.indexingRewardCutRatio = new BigDecimal(event.params.indexingRewardCut).div(FEE_CUT_DIVIDER)
+    this.indexerEntity.queryFeeCutRatio = new BigDecimal(event.params.queryFeeCut).div(FEE_CUT_DIVIDER)
+    
+    // Update the cooldown block
+    if(event.params.cooldownBlocks.isZero()) {
+      this.indexerEntity.delegatorParameterCooldownBlock = BigInt.fromI32(0)
+    } else {
+      this.indexerEntity.delegatorParameterCooldownBlock = event.block.number.plus(event.params.cooldownBlocks)
+    }
+
+    // Save the entity
     this.indexerEntity.save()
   }
 
