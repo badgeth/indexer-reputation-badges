@@ -2,11 +2,11 @@
 Indexer details
 """
 type Indexer @entity {
-  "Eth address of Indexer"
+  "Ethereum address of the Indexer"
   id: ID!
 
   "Unix Timestamp when this indexer was created"
-  createdAt: BigInt
+  createdAtTimestamp: BigInt
 
   "Tokens staked in the protocol in GRT"
   ownStake: BigDecimal
@@ -19,5 +19,38 @@ type Indexer @entity {
 
   "Block until the Delegator Parameters can not be modified"
   delegatorParameterCooldownBlock: BigInt
+
+  "Historical updates made by the Indexer"
+  updates: [IndexerUpdate!] @derivedFrom(field: "indexer")
+
+}
+
+"""
+Indexer update
+"""
+type IndexerUpdate @entity {
+  "Ethereum address of Indexer + block number"
+  id: ID!
+
+  "Indexer making the update"
+  indexer: Indexer!
+
+  "Unix Timestamp when this indexer made an update"
+  updatedAtTimestamp: BigInt
+
+  "Ethereum block when this indexer made an update"
+  updatedAtBlock: BigInt
+
+  "New Indexing Reward Cut Ratio: between 0 and 1"
+  newIndexingRewardCutRatio: BigDecimal
+
+  "New Query Fee Cut Ratio: between 0 and 1"
+  newQueryFeeCutRatio: BigDecimal
+
+  "Previous Indexing Reward Cut Ratio: between 0 and 1"
+  previousIndexingRewardCutRatio: BigDecimal
+
+  "Previous Query Fee Cut Ratio: between 0 and 1"
+  previousQueryFeeCutRatio: BigDecimal
 
 }

@@ -2,6 +2,28 @@
 
 This subgraph tracks The Graph network indexers performance.
 
+## Sample queries
+
+```graphql
+{
+  indexer(id:"<INDEXER ADDRESS>") {
+    id
+    createdAtTimestamp
+    ownStake
+    indexingRewardCutRatio
+    queryFeeCutRatio
+    updates {
+      id
+      updatedAtTimestamp
+      newQueryFeeCutRatio
+      newIndexingRewardCutRatio
+      previousQueryFeeCutRatio
+      previousIndexingRewardCutRatio
+    }
+  }
+}
+```
+
 ## Installation
 
 The below instructions are adapted from The Graph [Quick Start Instructions](https://thegraph.com/docs/quick-start).
