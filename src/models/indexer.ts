@@ -6,7 +6,7 @@ import {
 
 import {
   Indexer as IndexerEntity,
-  IndexerUpdate as IndexerUpdateEntity,
+  IndexerParameterUpdate as IndexerParameterUpdateEntity,
 } from "../../generated/schema"
 
 import {
@@ -107,7 +107,7 @@ export class Indexer {
     if(this.ownStake().equals(DECIMAL_ZERO)) {
       return DECIMAL_ZERO
     }
-    return this.allocatedStake().div(this.maximumDelegation())
+    return this.delegatedStake().div(this.maximumDelegation())
   }
 
   // Update the indexer own stake
@@ -136,7 +136,6 @@ export class Indexer {
     this.indexerEntity.allocationRatio = this.allocationRatio()
     this.indexerEntity.save()
   }
-
 
   //=============== Event Handlers ===============//
   // Handles a stake deposit
@@ -279,19 +278,16 @@ export class Indexer {
     // Store the update
     if(isUpdated) {
       let updateId = this.indexerEntity.id.concat('-').concat(event.block.number.toString())
-      let indexerUpdateEntity = new IndexerUpdateEntity(updateId)
-      indexerUpdateEntity.updatedAtTimestamp = event.block.timestamp
-      indexerUpdateEntity.updatedAtBlock = event.block.number
-      indexerUpdateEntity.indexer = this.indexerEntity.id
-      indexerUpdateEntity.previousIndexingRewardCutRatio = previousIndexingRewardCutRatio
-      indexerUpdateEntity.previousQueryFeeCutRatio = previousQueryFeeCutRatio
-      indexerUpdateEntity.newIndexingRewardCutRatio = newIndexingRewardCutRatio
-      indexerUpdateEntity.newQueryFeeCutRatio = newQueryFeeCutRatio
-      indexerUpdateEntity.save()
+      let indexerParameterUpdateEntity = new IndexerParameterUpdateEntity(updateId)
+      indexerParameterUpdateEntity.updatedAtTimestamp = event.block.timestamp
+      indexerParameterUpdateEntity.updatedAtBlock = event.block.number
+      indexerParameterUpdateEntity.indexer = this.indexerEntity.id
+      indexerParameterUpdateEntity.previousIndexingRewardCutRatio = previousIndexingRewardCutRatio
+      indexerParameterUpdateEntity.previousQueryFeeCutRatio = previousQueryFeeCutRatio
+      indexerParameterUpdateEntity.newIndexingRewardCutRatio = newIndexingRewardCutRatio
+      indexerParameterUpdateEntity.newQueryFeeCutRatio = newQueryFeeCutRatio
+      indexerParameterUpdateEntity.save()
     }
-
   }
-
-
 
 }

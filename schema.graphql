@@ -41,15 +41,15 @@ type Indexer @entity {
   "Block until the Delegator Parameters can not be modified"
   delegatorParameterCooldownBlock: BigInt
 
-  "Historical updates made by the Indexer"
-  updates: [IndexerUpdate!] @derivedFrom(field: "indexer")
+  "Historical updates of parameters made by the Indexer"
+  parameterUpdates: [IndexerParameterUpdate!] @derivedFrom(field: "indexer")
 
 }
 
 """
-Indexer update
+Indexer update of parameters
 """
-type IndexerUpdate @entity {
+type IndexerParameterUpdate @entity {
   "Ethereum address of Indexer + block number"
   id: ID!
 
