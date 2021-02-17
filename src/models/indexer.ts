@@ -208,6 +208,7 @@ export class Indexer {
   }
 
   // Handle the assignment of reward
+  // NOTE: Indexer rewards is not automatically restaked
   handleRewardsAssigned(event: RewardsAssigned): void {
     // Determine the rewards
     let rewardedIndexingTokens = tokenAmountToDecimal(event.params.amount)
@@ -225,8 +226,7 @@ export class Indexer {
       delegatorIndexingRewards = rewardedIndexingTokens.minus(indexerIndexingRewards)
     }
 
-    // Update the stakes since they are compounded
-    this.updateOwnStake(this.ownStake().plus(indexerIndexingRewards))
+    // Update the delegated since they are compounded
     this.updateDelegatedStake(
       this.delegatedStake().plus(delegatorIndexingRewards),
       this.delegationPoolShares()
