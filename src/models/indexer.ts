@@ -11,10 +11,12 @@ import {
 
 import {
   StakeDeposited,
+  StakeLocked,
   StakeWithdrawn,
   StakeSlashed,
   DelegationParametersUpdated,
   StakeDelegated,
+  StakeDelegatedLocked,
   StakeDelegatedWithdrawn,
   AllocationCreated,
   AllocationCollected,
@@ -28,7 +30,7 @@ import {
 
 import { tokenAmountToDecimal } from '../helpers/token'
 import { feeCutToDecimalRatio } from '../helpers/feeCut'
-import { DECIMAL_ZERO, DECIMAL_SIXTEEN } from '../helpers/constants'
+import { DECIMAL_ZERO, DECIMAL_SIXTEEN, INT_ZERO } from '../helpers/constants'
 
 // A class to manage Indexer
 export class Indexer {
@@ -46,6 +48,7 @@ export class Indexer {
       indexerEntity.allocationRatio = DECIMAL_ZERO
       indexerEntity.delegationRatio = DECIMAL_ZERO
       indexerEntity.isOverDelegated = false
+      indexerEntity.delegationPoolShares = INT_ZERO
     }
     this.indexerEntity = indexerEntity as IndexerEntity
   }
@@ -59,6 +62,11 @@ export class Indexer {
   // Indexer delegated stake
   delegatedStake(): BigDecimal {
     return this.indexerEntity.delegatedStake as BigDecimal
+  }
+
+  // Shares of the delegation pool
+  delegationPoolShares(): BigInt {
+    return this.indexerEntity.delegationPoolShares as BigInt
   }
 
   // Indexer allocated stake
@@ -94,7 +102,7 @@ export class Indexer {
     return this.allocatedStake().div(allocationCapacity)
   }
 
-  // Defines the delegation rato
+  // Defines the delegation ratio
   delegationRatio(): BigDecimal {
     if(this.ownStake().equals(DECIMAL_ZERO)) {
       return DECIMAL_ZERO
@@ -113,7 +121,8 @@ export class Indexer {
   }
 
   // Update the indexer delegated stake
-  updateDelegatedStake(newDelegatedStake: BigDecimal): void {
+  updateDelegatedStake(newDelegatedStake: BigDecimal, newDelegationPoolShares: BigInt): void {
+    this.indexerEntity.delegationPoolShares = newDelegationPoolShares
     this.indexerEntity.delegatedStake = newDelegatedStake
     this.indexerEntity.isOverDelegated = this.isOverDelegated()
     this.indexerEntity.allocationRatio = this.allocationRatio()
@@ -142,11 +151,15 @@ export class Indexer {
     this.updateOwnStake(this.ownStake().plus(indexerStakeDeposited))
   }
 
-  // Handles a stake withdrawl
-  handleStakeWithdrawn(event: StakeWithdrawn): void {
-    let indexerStakeWithdrawn = tokenAmountToDecimal(event.params.tokens)
-    this.updateOwnStake(this.ownStake().minus(indexerStakeWithdrawn))
+  // Handles a stake locked (=unstaked)
+  handleStakeLocked(event: StakeLocked): void {
+    let indexerStakeLocked = tokenAmountToDecimal(event.params.tokens)
+    this.updateOwnStake(this.ownStake().minus(indexerStakeLocked))
   }
+
+  // Handles a stake withdrawl
+  // NOTE: Does nothing since withdrawn balances are not tracked
+  handleStakeWithdrawn(event: StakeWithdrawn): void {}
 
   // Handles a stake slashing
   handleStakeSlashed(event: StakeSlashed): void {
@@ -157,14 +170,26 @@ export class Indexer {
   // Handles a stake delegation
   handleStakeDelegated(event: StakeDelegated): void {
     let indexerStakeDelegated = tokenAmountToDecimal(event.params.tokens)
-    this.updateDelegatedStake(this.delegatedStake().plus(indexerStakeDelegated))
+    let mintedShares = event.params.shares
+    this.updateDelegatedStake(
+      this.delegatedStake().plus(indexerStakeDelegated),
+      this.delegationPoolShares().plus(mintedShares)
+    )
+  }
+
+  // Handles a delegated stake lock
+  handleStakeDelegatedLocked(event: StakeDelegatedLocked): void {
+    let burnedShares = event.params.shares
+    let indexerStakeDelegatedWithdrawn = tokenAmountToDecimal(event.params.tokens)
+    this.updateDelegatedStake(
+      this.delegatedStake().minus(indexerStakeDelegatedWithdrawn),
+      this.delegationPoolShares().minus(burnedShares)
+    )
   }
 
   // Handles a stake delegation withdrawn
-  handleStakeDelegatedWithdrawn(event: StakeDelegatedWithdrawn): void {
-    let indexerStakeDelegatedWithdrawn = tokenAmountToDecimal(event.params.tokens)
-    this.updateDelegatedStake(this.delegatedStake().minus(indexerStakeDelegatedWithdrawn))
-  }
+  // NOTE: Does nothing since withdrawn balances are not tracked
+  handleStakeDelegatedWithdrawn(event: StakeDelegatedWithdrawn): void {}
 
   // Handles an allocation creation
   handleAllocationCreated(event: AllocationCreated): void {
@@ -173,8 +198,8 @@ export class Indexer {
   }
 
   // Handles an allocation collection
+  // NOTE: Does nothing since any fees collected here are added to the rebate pool
   handleAllocationCollected(event: AllocationCollected): void {}
-  
 
   // Handles an allocation closure
   handleAllocationClosed(event: AllocationClosed): void {
@@ -202,7 +227,10 @@ export class Indexer {
 
     // Update the stakes since they are compounded
     this.updateOwnStake(this.ownStake().plus(indexerIndexingRewards))
-    this.updateDelegatedStake(this.delegatedStake().plus(delegatorIndexingRewards))
+    this.updateDelegatedStake(
+      this.delegatedStake().plus(delegatorIndexingRewards),
+      this.delegationPoolShares()
+    )
   }
 
   // Handles a rebate claim (=Query Fees)
@@ -210,7 +238,10 @@ export class Indexer {
   handleRebateClaimed(event: RebateClaimed): void {
     // Increase the delegated tokens as they are automatically compounded
     let delegationFees = tokenAmountToDecimal(event.params.delegationFees)
-    this.updateDelegatedStake(this.delegatedStake().plus(delegationFees))
+    this.updateDelegatedStake(
+      this.delegatedStake().plus(delegationFees),
+      this.delegationPoolShares()
+    )
   }
 
   // Handle a change in Indexer delegation parameters

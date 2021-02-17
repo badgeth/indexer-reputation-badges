@@ -26,6 +26,9 @@ type Indexer @entity {
   "GRT Tokens delegated to this indexer versus maximum delegation"
   delegationRatio: BigDecimal
 
+  "Amount of shares in the Delegation Pool"
+  delegationPoolShares: BigInt
+
   "Flags if an Indexer is over delegated"
   isOverDelegated: Boolean
 
