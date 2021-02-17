@@ -44,6 +44,9 @@ type Indexer @entity {
   "Historical updates of parameters made by the Indexer"
   parameterUpdates: [IndexerParameterUpdate!] @derivedFrom(field: "indexer")
 
+  "Historical rewards distributed in the Indexer's delegation pool"
+  poolRewards: [PoolReward!] @derivedFrom(field: "indexer")
+
 }
 
 """
@@ -57,21 +60,56 @@ type IndexerParameterUpdate @entity {
   indexer: Indexer!
 
   "Unix Timestamp when this indexer made an update"
-  updatedAtTimestamp: BigInt
+  updatedAtTimestamp: BigInt!
 
   "Ethereum block when this indexer made an update"
-  updatedAtBlock: BigInt
+  updatedAtBlock: BigInt!
 
   "New Indexing Reward Cut Ratio: between 0 and 1"
-  newIndexingRewardCutRatio: BigDecimal
+  newIndexingRewardCutRatio: BigDecimal!
 
   "New Query Fee Cut Ratio: between 0 and 1"
-  newQueryFeeCutRatio: BigDecimal
+  newQueryFeeCutRatio: BigDecimal!
 
   "Previous Indexing Reward Cut Ratio: between 0 and 1"
   previousIndexingRewardCutRatio: BigDecimal
 
   "Previous Query Fee Cut Ratio: between 0 and 1"
   previousQueryFeeCutRatio: BigDecimal
+
+}
+
+enum PoolRewardType {
+  QueryFee
+  IndexingReward
+}
+
+"""
+Indexer Delegation Pool Rewards
+"""
+type PoolReward @entity {
+  "Ethereum address of Indexer + type + block number"
+  id: ID!
+
+  "Indexer providing the pool"
+  indexer: Indexer!
+
+  "Unix Timestamp when this reward was distributed"
+  createdAtTimestamp: BigInt!
+
+  "Ethereum block when this reward was distributed"
+  createdAtBlock: BigInt!
+
+  "Reward amount in GRT"
+  amount: BigDecimal!
+
+  "Reward amount in GRT per share"
+  shareRatio: BigDecimal!
+
+  "Reward amount in GRT per pooled token"
+  pooledTokenRatio: BigDecimal!
+
+  "Type of reward"
+  type: PoolRewardType!
 
 }

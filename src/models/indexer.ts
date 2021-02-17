@@ -2,11 +2,13 @@ import {
   Address,
   BigInt,
   BigDecimal,
+  ethereum,
 } from "@graphprotocol/graph-ts"
 
 import {
   Indexer as IndexerEntity,
   IndexerParameterUpdate as IndexerParameterUpdateEntity,
+  PoolReward as PoolRewardEntity,
 } from "../../generated/schema"
 
 import {
@@ -137,6 +139,26 @@ export class Indexer {
     this.indexerEntity.save()
   }
 
+  // Create a pool reward
+  savePoolReward(block: ethereum.Block, amount: BigDecimal, type: string): void {
+    if(amount.gt(DECIMAL_ZERO)) {
+      let rewardId = this.indexerEntity.id
+        .concat('-')
+        .concat(type)
+        .concat('-')
+        .concat(block.number.toString())
+      let poolReward = new PoolRewardEntity(rewardId)
+      poolReward.indexer = this.indexerEntity.id
+      poolReward.createdAtBlock = block.number
+      poolReward.createdAtTimestamp = block.timestamp
+      poolReward.amount = amount
+      poolReward.shareRatio = amount.div(this.delegationPoolShares().toBigDecimal())
+      poolReward.pooledTokenRatio = amount.div(this.delegatedStake())
+      poolReward.type = type
+      poolReward.save()
+    }
+  }
+
   //=============== Event Handlers ===============//
   // Handles a stake deposit
   handleStakeDeposited(event: StakeDeposited): void {
@@ -230,6 +252,9 @@ export class Indexer {
       this.delegatedStake().plus(delegatorIndexingRewards),
       this.delegationPoolShares()
     )
+
+    // Save the reward entity
+    this.savePoolReward(event.block, delegatorIndexingRewards, 'IndexingReward')
   }
 
   // Handles a rebate claim (=Query Fees)
@@ -241,6 +266,9 @@ export class Indexer {
       this.delegatedStake().plus(delegationFees),
       this.delegationPoolShares()
     )
+
+    // Save the reward entity
+    this.savePoolReward(event.block, delegationFees, 'QueryFee')
   }
 
   // Handle a change in Indexer delegation parameters
