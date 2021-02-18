@@ -33,7 +33,14 @@ import {
 
 import { tokenAmountToDecimal } from '../helpers/token'
 import { feeCutToDecimalRatio } from '../helpers/feeCut'
-import { DECIMAL_ZERO, DECIMAL_SIXTEEN, INT_ZERO, PROTOCOL_GENESIS, ONE_DAY } from '../helpers/constants'
+import { 
+  DECIMAL_ZERO,
+  DECIMAL_SIXTEEN,
+  INT_ZERO,
+  INT_ONE,
+  PROTOCOL_GENESIS,
+  ONE_DAY,
+} from '../helpers/constants'
 
 // A class to manage Indexer
 export class Indexer {
@@ -122,6 +129,7 @@ export class Indexer {
     // Lazy load the snapshot
     let snapshot = IndexerSnapshotEntity.load(snapshotId)
     if(snapshot == null) {
+      // Basic Initialization
       snapshot = new IndexerSnapshotEntity(snapshotId)
       snapshot.indexer = this.indexerEntity.id
       snapshot.startsAtTimestamp = PROTOCOL_GENESIS.plus(snapshotDay.times(ONE_DAY))
@@ -130,6 +138,30 @@ export class Indexer {
       snapshot.ownStakeDelta = DECIMAL_ZERO
       snapshot.delegatedStakeDelta = DECIMAL_ZERO
       snapshot.delegationRewards = DECIMAL_ZERO
+      snapshot.parametersChangeCount = 0
+      snapshot.previousDelegationRewardsDay = DECIMAL_ZERO
+      snapshot.previousDelegationRewardsWeek = DECIMAL_ZERO
+      snapshot.previousDelegationRewardsMonth = DECIMAL_ZERO
+
+      // Determine the previous day rewards
+      for(let i=1; i<31; i++) {
+        // Deterime the ID of the snapshot
+        let previousSnapshotId = this.indexerEntity.id.concat('-').concat(snapshotDay.minus(BigInt.fromI32(i)).toString())
+        let previousSnapshot = IndexerSnapshotEntity.load(previousSnapshotId)
+        
+        // If a snapshot is found, update previous counters
+        if(previousSnapshot != null) {
+          let previousDelegationRewards = previousSnapshot.delegationRewards
+          if(i == 1) {
+            snapshot.previousDelegationRewardsDay = snapshot.previousDelegationRewardsDay.plus(previousDelegationRewards)
+          }
+          if(i < 8) {
+            snapshot.previousDelegationRewardsWeek = snapshot.previousDelegationRewardsWeek.plus(previousDelegationRewards)
+          }
+          snapshot.previousDelegationRewardsMonth = snapshot.previousDelegationRewardsMonth.plus(previousDelegationRewards)
+        }
+      }
+
     }
     return snapshot as IndexerSnapshotEntity
   }
@@ -349,6 +381,12 @@ export class Indexer {
 
     // Store the update
     if(isUpdated) {
+      // Register the change in snapshot
+      let snapshot = this.snapshotAtBlock(event.block)
+      snapshot.parametersChangeCount++
+      snapshot.save()
+
+      // Store the update
       let updateId = this.indexerEntity.id.concat('-').concat(event.block.number.toString())
       let indexerParameterUpdateEntity = new IndexerParameterUpdateEntity(updateId)
       indexerParameterUpdateEntity.updatedAtTimestamp = event.block.timestamp

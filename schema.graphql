@@ -148,4 +148,16 @@ type IndexerSnapshot @entity {
   "Rewards distributed to Delegation pool"
   delegationRewards: BigDecimal!
 
+  "Rewards distributed to Delegation pool the previous 1 day"
+  previousDelegationRewardsDay: BigDecimal
+
+  "Rewards distributed to Delegation pool the previous 7 days"
+  previousDelegationRewardsWeek: BigDecimal
+
+  "Rewards distributed to Delegation pool the previous 7 days"
+  previousDelegationRewardsMonth: BigDecimal
+
+  "Count the number of parameters change"
+  parametersChangeCount: Int!
+
 }
