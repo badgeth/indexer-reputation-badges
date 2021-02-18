@@ -9,6 +9,7 @@ import {
   Indexer as IndexerEntity,
   IndexerParameterUpdate as IndexerParameterUpdateEntity,
   PoolReward as PoolRewardEntity,
+  IndexerSnapshot as IndexerSnapshotEntity,
 } from "../../generated/schema"
 
 import {
@@ -32,7 +33,7 @@ import {
 
 import { tokenAmountToDecimal } from '../helpers/token'
 import { feeCutToDecimalRatio } from '../helpers/feeCut'
-import { DECIMAL_ZERO, DECIMAL_SIXTEEN, INT_ZERO } from '../helpers/constants'
+import { DECIMAL_ZERO, DECIMAL_SIXTEEN, INT_ZERO, PROTOCOL_GENESIS } from '../helpers/constants'
 
 // A class to manage Indexer
 export class Indexer {
@@ -112,9 +113,35 @@ export class Indexer {
     return this.delegatedStake().div(this.maximumDelegation())
   }
 
+  // Get the snapshot for a specific block
+  snapshotAtBlock(block: ethereum.Block): IndexerSnapshotEntity {
+    // Define the snapshot ID
+    let snapshotDay = block.timestamp.minus(PROTOCOL_GENESIS).div(BigInt.fromI32(60*24))
+    let snapshotId = this.indexerEntity.id.concat('-').concat(snapshotDay.toString())
+
+    // Lazy load the snapshot
+    let snapshot = IndexerSnapshotEntity.load(snapshotId)
+    if(snapshot == null) {
+      snapshot = new IndexerSnapshotEntity(snapshotId)
+      snapshot.startsAtTimestamp = PROTOCOL_GENESIS.plus(snapshotDay.times(BigInt.fromI32(60*24)))
+      snapshot.ownStakeInitial = this.ownStake()
+      snapshot.delegatedStakeInitial = this.delegatedStake()
+      snapshot.ownStakeDelta = DECIMAL_ZERO
+      snapshot.delegatedStakeDelta = DECIMAL_ZERO
+      snapshot.delegationRewards = DECIMAL_ZERO
+    }
+    return snapshot as IndexerSnapshotEntity
+  }
+
   // Update the indexer own stake
-  updateOwnStake(newOwnStake: BigDecimal): void {
-    this.indexerEntity.ownStake = newOwnStake
+  updateOwnStake(ownStakeDelta: BigDecimal, block:ethereum.Block): void {
+    // Add the difference in the snapshot
+    let snapshot = this.snapshotAtBlock(block)
+    snapshot.ownStakeDelta = snapshot.ownStakeDelta.plus(ownStakeDelta)
+    snapshot.save()
+
+    // Update the own stake and other parameters
+    this.indexerEntity.ownStake = this.ownStake().plus(ownStakeDelta)
     this.indexerEntity.maximumDelegation = this.maximumDelegation()
     this.indexerEntity.isOverDelegated = this.isOverDelegated()
     this.indexerEntity.allocationRatio = this.allocationRatio()
@@ -123,9 +150,15 @@ export class Indexer {
   }
 
   // Update the indexer delegated stake
-  updateDelegatedStake(newDelegatedStake: BigDecimal, newDelegationPoolShares: BigInt): void {
-    this.indexerEntity.delegationPoolShares = newDelegationPoolShares
-    this.indexerEntity.delegatedStake = newDelegatedStake
+  updateDelegatedStake(delegatedStakeDelta: BigDecimal, delegationPoolSharesDelta: BigInt, block:ethereum.Block): void {
+    // Add the difference in the snapshot
+    let snapshot = this.snapshotAtBlock(block)
+    snapshot.delegatedStakeDelta = snapshot.delegatedStakeDelta.plus(delegatedStakeDelta)
+    snapshot.save()
+
+    // Update the delegation and other parameters
+    this.indexerEntity.delegatedStake = this.delegatedStake().plus(delegatedStakeDelta)
+    this.indexerEntity.delegationPoolShares = this.delegationPoolShares().plus(delegationPoolSharesDelta)
     this.indexerEntity.isOverDelegated = this.isOverDelegated()
     this.indexerEntity.allocationRatio = this.allocationRatio()
     this.indexerEntity.delegationRatio = this.delegationRatio()
@@ -142,6 +175,12 @@ export class Indexer {
   // Create a pool reward
   savePoolReward(block: ethereum.Block, amount: BigDecimal, type: string): void {
     if(amount.gt(DECIMAL_ZERO)) {
+      // Add the reward in the snapshot
+      let snapshot = this.snapshotAtBlock(block)
+      snapshot.delegationRewards = snapshot.delegationRewards.plus(amount)
+      snapshot.save()
+
+      // Save the Pool Reward
       let rewardId = this.indexerEntity.id
         .concat('-')
         .concat(type)
@@ -169,13 +208,13 @@ export class Indexer {
 
     // Update the deposit
     let indexerStakeDeposited = tokenAmountToDecimal(event.params.tokens)
-    this.updateOwnStake(this.ownStake().plus(indexerStakeDeposited))
+    this.updateOwnStake(indexerStakeDeposited, event.block)
   }
 
   // Handles a stake locked (=unstaked)
   handleStakeLocked(event: StakeLocked): void {
     let indexerStakeLocked = tokenAmountToDecimal(event.params.tokens)
-    this.updateOwnStake(this.ownStake().minus(indexerStakeLocked))
+    this.updateOwnStake(indexerStakeLocked.neg(), event.block)
   }
 
   // Handles a stake withdrawl
@@ -185,7 +224,7 @@ export class Indexer {
   // Handles a stake slashing
   handleStakeSlashed(event: StakeSlashed): void {
     let indexerStakeSlashed = tokenAmountToDecimal(event.params.tokens)
-    this.updateOwnStake(this.ownStake().minus(indexerStakeSlashed))
+    this.updateOwnStake(indexerStakeSlashed.neg(), event.block)
   }
 
   // Handles a stake delegation
@@ -193,18 +232,20 @@ export class Indexer {
     let indexerStakeDelegated = tokenAmountToDecimal(event.params.tokens)
     let mintedShares = event.params.shares
     this.updateDelegatedStake(
-      this.delegatedStake().plus(indexerStakeDelegated),
-      this.delegationPoolShares().plus(mintedShares)
+      indexerStakeDelegated,
+      mintedShares,
+      event.block
     )
   }
 
   // Handles a delegated stake lock
   handleStakeDelegatedLocked(event: StakeDelegatedLocked): void {
     let burnedShares = event.params.shares
-    let indexerStakeDelegatedWithdrawn = tokenAmountToDecimal(event.params.tokens)
+    let indexerStakeDelegatedLocked = tokenAmountToDecimal(event.params.tokens)
     this.updateDelegatedStake(
-      this.delegatedStake().minus(indexerStakeDelegatedWithdrawn),
-      this.delegationPoolShares().minus(burnedShares)
+      indexerStakeDelegatedLocked.neg(),
+      burnedShares.neg(),
+      event.block
     )
   }
 
@@ -249,8 +290,9 @@ export class Indexer {
 
     // Update the delegated since they are compounded
     this.updateDelegatedStake(
-      this.delegatedStake().plus(delegatorIndexingRewards),
-      this.delegationPoolShares()
+      delegatorIndexingRewards,
+      INT_ZERO,
+      event.block
     )
 
     // Save the reward entity
@@ -263,8 +305,9 @@ export class Indexer {
     // Increase the delegated tokens as they are automatically compounded
     let delegationFees = tokenAmountToDecimal(event.params.delegationFees)
     this.updateDelegatedStake(
-      this.delegatedStake().plus(delegationFees),
-      this.delegationPoolShares()
+      delegationFees,
+      INT_ZERO,
+      event.block
     )
 
     // Save the reward entity

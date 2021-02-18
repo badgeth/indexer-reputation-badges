@@ -79,6 +79,9 @@ type IndexerParameterUpdate @entity {
 
 }
 
+"""
+Types of Pool Rewards
+"""
 enum PoolRewardType {
   QueryFee
   IndexingReward
@@ -111,5 +114,35 @@ type PoolReward @entity {
 
   "Type of reward"
   type: PoolRewardType!
+
+}
+
+"""
+Indexer Snapshot
+"""
+type IndexerSnapshot @entity {
+  "Ethereum address of Indexer + block number"
+  id: ID!
+
+  "Indexer for this snapshot"
+  indexer: Indexer!
+
+  "Unix Timestamp when this snapshot starts"
+  startsAtTimestamp: BigInt!
+
+  "Indexer own stake when the snapshot starts"
+  ownStakeInitial: BigDecimal!
+
+  "Delegated stake when the snapshot starts"
+  delegatedStakeInitial: BigDecimal!
+
+  "Change in Indexer own stake"
+  ownStakeDelta: BigDecimal!
+
+  "Change in Indexer delegated stake"
+  delegatedStakeDelta: BigDecimal!
+
+  "Rewards distributed to Delegation pool"
+  delegationRewards: BigDecimal!
 
 }
