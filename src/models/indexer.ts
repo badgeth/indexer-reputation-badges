@@ -33,7 +33,7 @@ import {
 
 import { tokenAmountToDecimal } from '../helpers/token'
 import { feeCutToDecimalRatio } from '../helpers/feeCut'
-import { DECIMAL_ZERO, DECIMAL_SIXTEEN, INT_ZERO, PROTOCOL_GENESIS } from '../helpers/constants'
+import { DECIMAL_ZERO, DECIMAL_SIXTEEN, INT_ZERO, PROTOCOL_GENESIS, ONE_DAY } from '../helpers/constants'
 
 // A class to manage Indexer
 export class Indexer {
@@ -116,7 +116,7 @@ export class Indexer {
   // Get the snapshot for a specific block
   snapshotAtBlock(block: ethereum.Block): IndexerSnapshotEntity {
     // Define the snapshot ID
-    let snapshotDay = block.timestamp.minus(PROTOCOL_GENESIS).div(BigInt.fromI32(60*24))
+    let snapshotDay = block.timestamp.minus(PROTOCOL_GENESIS).div(ONE_DAY)
     let snapshotId = this.indexerEntity.id.concat('-').concat(snapshotDay.toString())
 
     // Lazy load the snapshot
@@ -124,7 +124,7 @@ export class Indexer {
     if(snapshot == null) {
       snapshot = new IndexerSnapshotEntity(snapshotId)
       snapshot.indexer = this.indexerEntity.id
-      snapshot.startsAtTimestamp = PROTOCOL_GENESIS.plus(snapshotDay.times(BigInt.fromI32(60*24)))
+      snapshot.startsAtTimestamp = PROTOCOL_GENESIS.plus(snapshotDay.times(ONE_DAY))
       snapshot.ownStakeInitial = this.ownStake()
       snapshot.delegatedStakeInitial = this.delegatedStake()
       snapshot.ownStakeDelta = DECIMAL_ZERO
