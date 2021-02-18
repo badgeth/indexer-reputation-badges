@@ -32,7 +32,7 @@ import {
  *   uint32 cooldownBlocks
  */
 export function handleDelegationParametersUpdated(event: DelegationParametersUpdated): void {
-  let indexer = new Indexer(event.params.indexer)
+  let indexer = new Indexer(event.params.indexer, event.block)
   indexer.handleDelegationParametersUpdated(event)
 }
 
@@ -43,7 +43,7 @@ export function handleDelegationParametersUpdated(event: DelegationParametersUpd
  *   uint256 tokens
  */
 export function handleStakeDeposited(event: StakeDeposited): void {
-  let indexer = new Indexer(event.params.indexer)
+  let indexer = new Indexer(event.params.indexer, event.block)
   indexer.handleStakeDeposited(event)
 }
 
@@ -55,7 +55,7 @@ export function handleStakeDeposited(event: StakeDeposited): void {
  *   uint256 until
  */
 export function handleStakeLocked(event: StakeLocked): void {
-  let indexer = new Indexer(event.params.indexer)
+  let indexer = new Indexer(event.params.indexer, event.block)
   indexer.handleStakeLocked(event)
 }
 
@@ -66,7 +66,7 @@ export function handleStakeLocked(event: StakeLocked): void {
  *   uint256 tokens
  */
 export function handleStakeWithdrawn(event: StakeWithdrawn): void {
-  let indexer = new Indexer(event.params.indexer)
+  let indexer = new Indexer(event.params.indexer, event.block)
   indexer.handleStakeWithdrawn(event)
 }
 
@@ -80,7 +80,7 @@ export function handleStakeWithdrawn(event: StakeWithdrawn): void {
  *   address beneficiary
  */
 export function handleStakeSlashed(event: StakeSlashed): void {
-  let indexer = new Indexer(event.params.indexer)
+  let indexer = new Indexer(event.params.indexer, event.block)
   indexer.handleStakeSlashed(event)
 }
 
@@ -94,7 +94,7 @@ export function handleStakeSlashed(event: StakeSlashed): void {
  *   uint256 shares
  */
 export function handleStakeDelegated(event: StakeDelegated): void {
-  let indexer = new Indexer(event.params.indexer)
+  let indexer = new Indexer(event.params.indexer, event.block)
   indexer.handleStakeDelegated(event)
 }
 
@@ -109,7 +109,7 @@ export function handleStakeDelegated(event: StakeDelegated): void {
  *   uint256 until
  */
 export function handleStakeDelegatedLocked(event: StakeDelegatedLocked): void {
-  let indexer = new Indexer(event.params.indexer)
+  let indexer = new Indexer(event.params.indexer, event.block)
   indexer.handleStakeDelegatedLocked(event)
 }
 
@@ -121,7 +121,7 @@ export function handleStakeDelegatedLocked(event: StakeDelegatedLocked): void {
  *   uint256 tokens
  */
 export function handleStakeDelegatedWithdrawn(event: StakeDelegatedWithdrawn): void {
-  let indexer = new Indexer(event.params.indexer)
+  let indexer = new Indexer(event.params.indexer, event.block)
   indexer.handleStakeDelegatedWithdrawn(event)
 }
 
@@ -139,7 +139,7 @@ export function handleStakeDelegatedWithdrawn(event: StakeDelegatedWithdrawn): v
  *   bytes32 metadata
  */
 export function handleAllocationCreated(event: AllocationCreated): void {
-  let indexer = new Indexer(event.params.indexer)
+  let indexer = new Indexer(event.params.indexer, event.block)
   indexer.handleAllocationCreated(event)
 }
 
@@ -158,7 +158,7 @@ export function handleAllocationCreated(event: AllocationCreated): void {
  *   uint256 rebateFees
  */
 export function handleAllocationCollected(event: AllocationCollected): void {
-  let indexer = new Indexer(event.params.indexer)
+  let indexer = new Indexer(event.params.indexer, event.block)
   indexer.handleAllocationCollected(event)
 }
 
@@ -180,7 +180,7 @@ export function handleAllocationCollected(event: AllocationCollected): void {
  *   bool isDelegator
  */
 export function handleAllocationClosed(event: AllocationClosed): void {
-  let indexer = new Indexer(event.params.indexer)
+  let indexer = new Indexer(event.params.indexer, event.block)
   indexer.handleAllocationClosed(event)
 }
 
@@ -200,6 +200,6 @@ export function handleAllocationClosed(event: AllocationClosed): void {
  *   uint256 delegationFees
  */
 export function handleRebateClaimed(event: RebateClaimed): void {
-  let indexer = new Indexer(event.params.indexer)
+  let indexer = new Indexer(event.params.indexer, event.block)
   indexer.handleRebateClaimed(event)
 }

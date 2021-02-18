@@ -15,6 +15,6 @@ import {
     uint256 amount
  */
 export function handleRewardsAssigned(event: RewardsAssigned): void {
-  let indexer = new Indexer(event.params.indexer)
+  let indexer = new Indexer(event.params.indexer, event.block)
   indexer.handleRewardsAssigned(event)
 }
