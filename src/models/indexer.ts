@@ -123,6 +123,7 @@ export class Indexer {
     let snapshot = IndexerSnapshotEntity.load(snapshotId)
     if(snapshot == null) {
       snapshot = new IndexerSnapshotEntity(snapshotId)
+      snapshot.indexer = this.indexerEntity.id
       snapshot.startsAtTimestamp = PROTOCOL_GENESIS.plus(snapshotDay.times(BigInt.fromI32(60*24)))
       snapshot.ownStakeInitial = this.ownStake()
       snapshot.delegatedStakeInitial = this.delegatedStake()

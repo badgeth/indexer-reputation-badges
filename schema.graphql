@@ -47,6 +47,9 @@ type Indexer @entity {
   "Historical rewards distributed in the Indexer's delegation pool"
   poolRewards: [PoolReward!] @derivedFrom(field: "indexer")
 
+  "Snapshots of changes for this indexer"
+  snapshots: [IndexerSnapshot!] @derivedFrom(field: "indexer")
+
 }
 
 """
