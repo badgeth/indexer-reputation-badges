@@ -61,6 +61,7 @@ export class Indexer {
       indexerEntity.delegationRatio = DECIMAL_ZERO
       indexerEntity.isOverDelegated = false
       indexerEntity.delegationPoolShares = INT_ZERO
+      indexerEntity.monthlyDelegatorRewardRate = DECIMAL_ZERO
     }
     this.indexerEntity = indexerEntity as IndexerEntity
     this.currentBlock = currentBlock
@@ -169,12 +170,21 @@ export class Indexer {
     return snapshot as IndexerSnapshotEntity
   }
 
+  // Determine the monthly reward rate for delegator
+  monthlyDelegatorRewardRate(): BigDecimal {
+    if(this.delegatedStake().equals(DECIMAL_ZERO)) {
+      return DECIMAL_ZERO
+    }
+    return this.snapshot().previousDelegationRewardsMonth.div(this.delegatedStake())
+  }
+
   // Update the indexer own stake
   updateOwnStake(ownStakeDelta: BigDecimal): void {
     // Add the difference in the snapshot
     let snapshot = this.snapshot()
     snapshot.ownStakeDelta = snapshot.ownStakeDelta.plus(ownStakeDelta)
     snapshot.save()
+    this.indexerEntity.lastSnapshot = snapshot.id
 
     // Update the own stake and other parameters
     this.indexerEntity.ownStake = this.ownStake().plus(ownStakeDelta)
@@ -191,6 +201,7 @@ export class Indexer {
     let snapshot = this.snapshot()
     snapshot.delegatedStakeDelta = snapshot.delegatedStakeDelta.plus(delegatedStakeDelta)
     snapshot.save()
+    this.indexerEntity.lastSnapshot = snapshot.id
 
     // Update the delegation and other parameters
     this.indexerEntity.delegatedStake = this.delegatedStake().plus(delegatedStakeDelta)
@@ -198,6 +209,7 @@ export class Indexer {
     this.indexerEntity.isOverDelegated = this.isOverDelegated()
     this.indexerEntity.allocationRatio = this.allocationRatio()
     this.indexerEntity.delegationRatio = this.delegationRatio()
+    this.indexerEntity.monthlyDelegatorRewardRate = this.monthlyDelegatorRewardRate()
     this.indexerEntity.save()
   }
 
@@ -316,6 +328,8 @@ export class Indexer {
       indexerIndexingRewards = rewardedIndexingTokens.times(this.indexerEntity.indexingRewardCutRatio as BigDecimal)
       delegatorIndexingRewards = rewardedIndexingTokens.minus(indexerIndexingRewards)
     }
+    // Save the reward entity
+    this.savePoolReward(delegatorIndexingRewards, 'IndexingReward')
 
     // Update the delegated since they are compounded
     this.updateDelegatedStake(
@@ -323,8 +337,7 @@ export class Indexer {
       INT_ZERO
     )
 
-    // Save the reward entity
-    this.savePoolReward(delegatorIndexingRewards, 'IndexingReward')
+
   }
 
   // Handles a rebate claim (=Query Fees)
@@ -360,9 +373,6 @@ export class Indexer {
       this.indexerEntity.delegatorParameterCooldownBlock = event.block.number.plus(event.params.cooldownBlocks)
     }
 
-    // Save the indexer entity
-    this.indexerEntity.save()
-
     // Determine if an update was really made
     let isUpdated = true
     if((previousIndexingRewardCutRatio != null) && (previousQueryFeeCutRatio != null)) { 
@@ -379,6 +389,7 @@ export class Indexer {
       let snapshot = this.snapshot()
       snapshot.parametersChangeCount++
       snapshot.save()
+      this.indexerEntity.lastSnapshot = snapshot.id
 
       // Store the update
       let updateId = this.indexerEntity.id.concat('-').concat(event.block.number.toString())
@@ -392,6 +403,9 @@ export class Indexer {
       indexerParameterUpdateEntity.newQueryFeeCutRatio = newQueryFeeCutRatio
       indexerParameterUpdateEntity.save()
     }
+
+    // Save the indexer entity
+    this.indexerEntity.save()
   }
 
 }
