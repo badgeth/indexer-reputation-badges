@@ -83,11 +83,11 @@ export class IndexerSnapshot {
   }
 
   //--- GETTERS ---//
-  id(): string {
+  get id(): string {
     return this.indexerSnapshotEntity.id
   }
 
-  previousDelegationRewardsMonth(): BigDecimal {
+  get previousDelegationRewardsMonth(): BigDecimal {
     return this.indexerSnapshotEntity.previousDelegationRewardsMonth as BigDecimal
   }
 

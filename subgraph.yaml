@@ -1,5 +1,5 @@
 specVersion: 0.0.2
-description: The Graph indexer KPI subgraph
+description: The Graph Indexer KPI subgraph
 repository: https://github.com/mtahon/indexer-kpi-subgraph
 schema:
   file: ./schema.graphql
@@ -18,7 +18,8 @@ dataSources:
       file: ./src/mappings/staking.ts
       entities:
         - Indexer
-        - IndexerUpdate
+        - IndexerParameterUpdate
+        - IndexerSnapshot
       abis:
         - name: Staking
           file: ./abis/Staking.json
@@ -61,6 +62,7 @@ dataSources:
       file: ./src/mappings/rewardsManager.ts
       entities:
         - Indexer
+        - IndexerSnapshot
       abis:
         - name: RewardsManager
           file: ./abis/RewardsManager.json

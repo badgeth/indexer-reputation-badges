@@ -12,7 +12,7 @@ export function sixteenBD(): BigDecimal {
 }
 
 export function protocolGenesis(): BigInt {
-  return BigInt.fromI32(1607844057) // Timestamp for Ethereum Block #11446786
+  return BigInt.fromString('1607844057') // Timestamp for Ethereum Block #11446786
 }
 
 export function zeroBI(): BigInt {
