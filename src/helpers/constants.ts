@@ -3,9 +3,26 @@ import {
   BigInt,
 } from "@graphprotocol/graph-ts"
 
-export let INT_ZERO = BigInt.fromI32(0)
-export let INT_ONE = BigInt.fromI32(1)
-export let DECIMAL_ZERO = BigDecimal.fromString('0')
-export let DECIMAL_SIXTEEN = BigDecimal.fromString('16')
-export let PROTOCOL_GENESIS = BigInt.fromI32(1607844057) // Timestamp for Ethereum Block #11446786
-export let ONE_DAY = BigInt.fromI32(60*60*24)
+export function zeroBD(): BigDecimal {
+  return BigDecimal.fromString('0')
+}
+
+export function sixteenBD(): BigDecimal {
+  return BigDecimal.fromString('16')
+}
+
+export function protocolGenesis(): BigInt {
+  return BigInt.fromI32(1607844057) // Timestamp for Ethereum Block #11446786
+}
+
+export function zeroBI(): BigInt {
+  return BigInt.fromI32(0)
+}
+
+export function oneBI(): BigInt {
+  return BigInt.fromI32(1)
+}
+
+export function oneDay(): BigInt {
+  return BigInt.fromI32(60*60*24)
+}

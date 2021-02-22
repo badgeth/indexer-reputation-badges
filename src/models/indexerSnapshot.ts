@@ -10,14 +10,14 @@ import {
 } from "../../generated/schema"
 
 import { 
-  DECIMAL_ZERO,
-  PROTOCOL_GENESIS,
-  ONE_DAY,
+  zeroBD,
+  protocolGenesis,
+  oneDay,
 } from '../helpers/constants'
 
 // Function to generate a snapshot ID
 function buildSnapshotId(indexerEntity: IndexerEntity, timestamp: BigInt): string {
-  let snapshotDay = timestamp.minus(PROTOCOL_GENESIS).div(ONE_DAY)
+  let snapshotDay = timestamp.minus(protocolGenesis()).div(oneDay())
   let snapshotId = indexerEntity.id.concat('-').concat(snapshotDay.toString())
   return snapshotId
 }
@@ -41,20 +41,28 @@ export class IndexerSnapshot {
       indexerSnapshotEntity = new IndexerSnapshotEntity(snapshotId)
       indexerSnapshotEntity.indexer = this.indexerEntity.id
       indexerSnapshotEntity.createdAtTimestamp = currentBlock.timestamp
-      indexerSnapshotEntity.ownStakeInitial = this.indexerEntity.ownStake as BigDecimal
-      indexerSnapshotEntity.delegatedStakeInitial = this.indexerEntity.delegatedStake as BigDecimal
-      indexerSnapshotEntity.ownStakeDelta = DECIMAL_ZERO
-      indexerSnapshotEntity.delegatedStakeDelta = DECIMAL_ZERO
-      indexerSnapshotEntity.delegationRewards = DECIMAL_ZERO
+      indexerSnapshotEntity.ownStakeInitial = zeroBD()
+      indexerSnapshotEntity.delegatedStakeInitial = zeroBD()
+      indexerSnapshotEntity.ownStakeDelta = zeroBD()
+      indexerSnapshotEntity.delegatedStakeDelta = zeroBD()
+      indexerSnapshotEntity.delegationRewards = zeroBD()
       indexerSnapshotEntity.parametersChangeCount = 0
-      indexerSnapshotEntity.previousDelegationRewardsDay = DECIMAL_ZERO
-      indexerSnapshotEntity.previousDelegationRewardsWeek = DECIMAL_ZERO
-      indexerSnapshotEntity.previousDelegationRewardsMonth = DECIMAL_ZERO
+      indexerSnapshotEntity.previousDelegationRewardsDay = zeroBD()
+      indexerSnapshotEntity.previousDelegationRewardsWeek = zeroBD()
+      indexerSnapshotEntity.previousDelegationRewardsMonth = zeroBD()
+
+      if(this.indexerEntity.ownStake != null) {
+        indexerSnapshotEntity.ownStakeInitial = this.indexerEntity.ownStake as BigDecimal
+      }
+
+      if(this.indexerEntity.delegatedStake != null) {
+        indexerSnapshotEntity.delegatedStakeInitial = this.indexerEntity.delegatedStake as BigDecimal
+      }
 
       // Determine the previous day rewards
       for(let i=1; i<31; i++) {
         // Deterime the ID of the snapshot
-        let pastSnapshotId = buildSnapshotId(this.indexerEntity, currentBlock.timestamp.minus(BigInt.fromI32(i).times(ONE_DAY)))
+        let pastSnapshotId = buildSnapshotId(this.indexerEntity, currentBlock.timestamp.minus(BigInt.fromI32(i).times(oneDay())))
         let pastSnapshot = IndexerSnapshotEntity.load(pastSnapshotId)
         
         // If a snapshot is found, update previous counters
@@ -69,9 +77,9 @@ export class IndexerSnapshot {
           this.indexerSnapshotEntity.previousDelegationRewardsMonth = indexerSnapshotEntity.previousDelegationRewardsMonth.plus(pastSnapshotDelegationRewards)
         }
       }
-
-      this.indexerSnapshotEntity = indexerSnapshotEntity as IndexerSnapshotEntity
     }
+
+    this.indexerSnapshotEntity = indexerSnapshotEntity as IndexerSnapshotEntity
   }
 
   //--- GETTERS ---//
