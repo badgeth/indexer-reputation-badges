@@ -47,9 +47,6 @@ type Indexer @entity {
   "Historical updates of parameters made by the Indexer"
   parameterUpdates: [IndexerParameterUpdate!] @derivedFrom(field: "indexer")
 
-  "Historical rewards distributed in the Indexer's delegation pool"
-  poolRewards: [PoolReward!] @derivedFrom(field: "indexer")
-
   "Snapshots of changes for this indexer"
   snapshots: [IndexerSnapshot!] @derivedFrom(field: "indexer")
 
@@ -89,44 +86,6 @@ type IndexerParameterUpdate @entity {
 }
 
 """
-Types of Pool Rewards
-"""
-enum PoolRewardType {
-  QueryFee
-  IndexingReward
-}
-
-"""
-Indexer Delegation Pool Rewards
-"""
-type PoolReward @entity {
-  "Ethereum address of Indexer + type + block number"
-  id: ID!
-
-  "Indexer providing the pool"
-  indexer: Indexer!
-
-  "Unix Timestamp when this reward was distributed"
-  createdAtTimestamp: BigInt!
-
-  "Ethereum block when this reward was distributed"
-  createdAtBlock: BigInt!
-
-  "Reward amount in GRT"
-  amount: BigDecimal!
-
-  "Reward amount in GRT per share"
-  shareRatio: BigDecimal!
-
-  "Reward amount in GRT per pooled token"
-  pooledTokenRatio: BigDecimal!
-
-  "Type of reward"
-  type: PoolRewardType!
-
-}
-
-"""
 Indexer Snapshot
 """
 type IndexerSnapshot @entity {
@@ -136,8 +95,8 @@ type IndexerSnapshot @entity {
   "Indexer for this snapshot"
   indexer: Indexer!
 
-  "Unix Timestamp when this snapshot starts"
-  startsAtTimestamp: BigInt!
+  "Unix Timestamp when this snapshot is created"
+  createdAtTimestamp: BigInt!
 
   "Indexer own stake when the snapshot starts"
   ownStakeInitial: BigDecimal!

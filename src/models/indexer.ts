@@ -7,10 +7,10 @@ import {
 
 import {
   Indexer as IndexerEntity,
-  IndexerParameterUpdate as IndexerParameterUpdateEntity,
-  PoolReward as PoolRewardEntity,
-  IndexerSnapshot as IndexerSnapshotEntity,
 } from "../../generated/schema"
+
+import { IndexerSnapshot } from "./indexerSnapshot"
+import { IndexerParameterUpdate } from "./indexerParameterUpdate"
 
 import {
   StakeDeposited,
@@ -37,15 +37,13 @@ import {
   DECIMAL_ZERO,
   DECIMAL_SIXTEEN,
   INT_ZERO,
-  INT_ONE,
-  PROTOCOL_GENESIS,
-  ONE_DAY,
 } from '../helpers/constants'
 
 // A class to manage Indexer
 export class Indexer {
   indexerEntity: IndexerEntity
   currentBlock: ethereum.Block
+  currentSnapshot: IndexerSnapshot
 
   // Initialize an Indexer using its address
   constructor(address: Address, currentBlock: ethereum.Block) {
@@ -65,9 +63,15 @@ export class Indexer {
     }
     this.indexerEntity = indexerEntity as IndexerEntity
     this.currentBlock = currentBlock
+    this.currentSnapshot = new IndexerSnapshot(this.indexerEntity, this.currentBlock)
   }
 
   //=============== Getters and Setters ===============//
+  // Indexer ID
+  id(): string {
+    return this.indexerEntity.id
+  }
+
   // Indexer own stake
   ownStake(): BigDecimal {
     return this.indexerEntity.ownStake as BigDecimal
@@ -124,67 +128,19 @@ export class Indexer {
     return this.delegatedStake().div(this.maximumDelegation())
   }
 
-  // Get the snapshot for the current block
-  snapshot(): IndexerSnapshotEntity {
-    // Define the snapshot ID
-    let snapshotDay = this.currentBlock.timestamp.minus(PROTOCOL_GENESIS).div(ONE_DAY)
-    let snapshotId = this.indexerEntity.id.concat('-').concat(snapshotDay.toString())
-
-    // Lazy load the snapshot
-    let snapshot = IndexerSnapshotEntity.load(snapshotId)
-    if(snapshot == null) {
-      // Basic Initialization
-      snapshot = new IndexerSnapshotEntity(snapshotId)
-      snapshot.indexer = this.indexerEntity.id
-      snapshot.startsAtTimestamp = PROTOCOL_GENESIS.plus(snapshotDay.times(ONE_DAY))
-      snapshot.ownStakeInitial = this.ownStake()
-      snapshot.delegatedStakeInitial = this.delegatedStake()
-      snapshot.ownStakeDelta = DECIMAL_ZERO
-      snapshot.delegatedStakeDelta = DECIMAL_ZERO
-      snapshot.delegationRewards = DECIMAL_ZERO
-      snapshot.parametersChangeCount = 0
-      snapshot.previousDelegationRewardsDay = DECIMAL_ZERO
-      snapshot.previousDelegationRewardsWeek = DECIMAL_ZERO
-      snapshot.previousDelegationRewardsMonth = DECIMAL_ZERO
-
-      // Determine the previous day rewards
-      for(let i=1; i<31; i++) {
-        // Deterime the ID of the snapshot
-        let previousSnapshotId = this.indexerEntity.id.concat('-').concat(snapshotDay.minus(BigInt.fromI32(i)).toString())
-        let previousSnapshot = IndexerSnapshotEntity.load(previousSnapshotId)
-        
-        // If a snapshot is found, update previous counters
-        if(previousSnapshot != null) {
-          let previousDelegationRewards = previousSnapshot.delegationRewards
-          if(i == 1) {
-            snapshot.previousDelegationRewardsDay = snapshot.previousDelegationRewardsDay.plus(previousDelegationRewards)
-          }
-          if(i < 8) {
-            snapshot.previousDelegationRewardsWeek = snapshot.previousDelegationRewardsWeek.plus(previousDelegationRewards)
-          }
-          snapshot.previousDelegationRewardsMonth = snapshot.previousDelegationRewardsMonth.plus(previousDelegationRewards)
-        }
-      }
-
-    }
-    return snapshot as IndexerSnapshotEntity
-  }
-
   // Determine the monthly reward rate for delegator
   monthlyDelegatorRewardRate(): BigDecimal {
     if(this.delegatedStake().equals(DECIMAL_ZERO)) {
       return DECIMAL_ZERO
     }
-    return this.snapshot().previousDelegationRewardsMonth.div(this.delegatedStake())
+    return this.currentSnapshot.previousDelegationRewardsMonth().div(this.delegatedStake())
   }
 
   // Update the indexer own stake
   updateOwnStake(ownStakeDelta: BigDecimal): void {
     // Add the difference in the snapshot
-    let snapshot = this.snapshot()
-    snapshot.ownStakeDelta = snapshot.ownStakeDelta.plus(ownStakeDelta)
-    snapshot.save()
-    this.indexerEntity.lastSnapshot = snapshot.id
+    this.currentSnapshot.updateOwnStake(ownStakeDelta)
+    this.indexerEntity.lastSnapshot = this.currentSnapshot.id()
 
     // Update the own stake and other parameters
     this.indexerEntity.ownStake = this.ownStake().plus(ownStakeDelta)
@@ -198,10 +154,8 @@ export class Indexer {
   // Update the indexer delegated stake
   updateDelegatedStake(delegatedStakeDelta: BigDecimal, delegationPoolSharesDelta: BigInt): void {
     // Add the difference in the snapshot
-    let snapshot = this.snapshot()
-    snapshot.delegatedStakeDelta = snapshot.delegatedStakeDelta.plus(delegatedStakeDelta)
-    snapshot.save()
-    this.indexerEntity.lastSnapshot = snapshot.id
+    this.currentSnapshot.updateDelegatedStake(delegatedStakeDelta)
+    this.indexerEntity.lastSnapshot = this.currentSnapshot.id()
 
     // Update the delegation and other parameters
     this.indexerEntity.delegatedStake = this.delegatedStake().plus(delegatedStakeDelta)
@@ -221,28 +175,10 @@ export class Indexer {
   }
 
   // Create a pool reward
-  savePoolReward(amount: BigDecimal, type: string): void {
+  addDelegationPoolRewards(amount: BigDecimal): void {
     if(amount.gt(DECIMAL_ZERO)) {
       // Add the reward in the snapshot
-      let snapshot = this.snapshot()
-      snapshot.delegationRewards = snapshot.delegationRewards.plus(amount)
-      snapshot.save()
-
-      // Save the Pool Reward
-      let rewardId = this.indexerEntity.id
-        .concat('-')
-        .concat(type)
-        .concat('-')
-        .concat(this.currentBlock.number.toString())
-      let poolReward = new PoolRewardEntity(rewardId)
-      poolReward.indexer = this.indexerEntity.id
-      poolReward.createdAtBlock = this.currentBlock.number
-      poolReward.createdAtTimestamp = this.currentBlock.timestamp
-      poolReward.amount = amount
-      poolReward.shareRatio = amount.div(this.delegationPoolShares().toBigDecimal())
-      poolReward.pooledTokenRatio = amount.div(this.delegatedStake())
-      poolReward.type = type
-      poolReward.save()
+      this.currentSnapshot.addDelegationPoolRewards(amount)
     }
   }
 
@@ -329,7 +265,7 @@ export class Indexer {
       delegatorIndexingRewards = rewardedIndexingTokens.minus(indexerIndexingRewards)
     }
     // Save the reward entity
-    this.savePoolReward(delegatorIndexingRewards, 'IndexingReward')
+    this.addDelegationPoolRewards(delegatorIndexingRewards)
 
     // Update the delegated since they are compounded
     this.updateDelegatedStake(
@@ -351,57 +287,26 @@ export class Indexer {
     )
 
     // Save the reward entity
-    this.savePoolReward(delegationFees, 'QueryFee')
+    this.addDelegationPoolRewards(delegationFees)
   }
 
   // Handle a change in Indexer delegation parameters
   handleDelegationParametersUpdated(event: DelegationParametersUpdated): void {
-    // Store previous values for the update
-    let previousIndexingRewardCutRatio = this.indexerEntity.indexingRewardCutRatio
-    let previousQueryFeeCutRatio = this.indexerEntity.queryFeeCutRatio
+    // Get the new values for the update
     let newIndexingRewardCutRatio = feeCutToDecimalRatio(event.params.indexingRewardCut)
     let newQueryFeeCutRatio = feeCutToDecimalRatio(event.params.queryFeeCut)
+    let indexerParameterUpdate = new IndexerParameterUpdate(this.indexerEntity, this.currentBlock)
 
     // Update the query fee ratios
     this.indexerEntity.indexingRewardCutRatio = newIndexingRewardCutRatio
     this.indexerEntity.queryFeeCutRatio = newQueryFeeCutRatio
+    indexerParameterUpdate.registerUpdate(newIndexingRewardCutRatio, newQueryFeeCutRatio)
     
     // Update the cooldown block
     if(event.params.cooldownBlocks.isZero()) {
       this.indexerEntity.delegatorParameterCooldownBlock = null
     } else {
       this.indexerEntity.delegatorParameterCooldownBlock = event.block.number.plus(event.params.cooldownBlocks)
-    }
-
-    // Determine if an update was really made
-    let isUpdated = true
-    if((previousIndexingRewardCutRatio != null) && (previousQueryFeeCutRatio != null)) { 
-      if(newIndexingRewardCutRatio.equals(previousIndexingRewardCutRatio as BigDecimal) &&
-        newQueryFeeCutRatio.equals(previousQueryFeeCutRatio as BigDecimal))
-        {
-          isUpdated = false
-        }
-    }
-
-    // Store the update
-    if(isUpdated) {
-      // Register the change in snapshot
-      let snapshot = this.snapshot()
-      snapshot.parametersChangeCount++
-      snapshot.save()
-      this.indexerEntity.lastSnapshot = snapshot.id
-
-      // Store the update
-      let updateId = this.indexerEntity.id.concat('-').concat(event.block.number.toString())
-      let indexerParameterUpdateEntity = new IndexerParameterUpdateEntity(updateId)
-      indexerParameterUpdateEntity.updatedAtTimestamp = event.block.timestamp
-      indexerParameterUpdateEntity.updatedAtBlock = event.block.number
-      indexerParameterUpdateEntity.indexer = this.indexerEntity.id
-      indexerParameterUpdateEntity.previousIndexingRewardCutRatio = previousIndexingRewardCutRatio
-      indexerParameterUpdateEntity.previousQueryFeeCutRatio = previousQueryFeeCutRatio
-      indexerParameterUpdateEntity.newIndexingRewardCutRatio = newIndexingRewardCutRatio
-      indexerParameterUpdateEntity.newQueryFeeCutRatio = newQueryFeeCutRatio
-      indexerParameterUpdateEntity.save()
     }
 
     // Save the indexer entity
