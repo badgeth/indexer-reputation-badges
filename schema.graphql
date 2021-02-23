@@ -110,17 +110,11 @@ type IndexerSnapshot @entity {
   "Change in Indexer delegated stake"
   delegatedStakeDelta: BigDecimal!
 
-  "Rewards distributed to Delegation pool"
-  delegationRewards: BigDecimal!
+  "Indexing Rewards distributed to Delegation pool"
+  delegationPoolIndexingRewards: BigDecimal!
 
-  "Rewards distributed to Delegation pool the previous 1 day"
-  previousDelegationRewardsDay: BigDecimal
-
-  "Rewards distributed to Delegation pool the previous 7 days"
-  previousDelegationRewardsWeek: BigDecimal
-
-  "Rewards distributed to Delegation pool the previous 7 days"
-  previousDelegationRewardsMonth: BigDecimal
+  "Query Fees distributed to Delegation pool"
+  delegationPoolQueryFees: BigDecimal!
 
   "Count the number of parameters change"
   parametersChangeCount: Int!

@@ -38,27 +38,6 @@ export class IndexerSnapshot {
     return snapshotId
   }
 
-  _updatePastRewards(): void {
-      // Determine the previous day rewards
-      for(let i=1; i<31; i++) {
-        // Deterime the ID of the snapshot
-        let pastSnapshotId = this._snapshotIdFromDays(BigInt.fromI32(i))
-        let pastSnapshot = IndexerSnapshotEntity.load(pastSnapshotId)
-        
-        // If a snapshot is found, update previous counters
-        if(pastSnapshot != null) {
-          let pastSnapshotDelegationRewards = pastSnapshot.delegationRewards
-          if(i == 1) {
-            this.indexerSnapshotEntity.previousDelegationRewardsDay = this.indexerSnapshotEntity.previousDelegationRewardsDay.plus(pastSnapshotDelegationRewards)
-          }
-          if(i < 8) {
-            this.indexerSnapshotEntity.previousDelegationRewardsWeek = this.indexerSnapshotEntity.previousDelegationRewardsWeek.plus(pastSnapshotDelegationRewards)
-          }
-          this.indexerSnapshotEntity.previousDelegationRewardsMonth = this.indexerSnapshotEntity.previousDelegationRewardsMonth.plus(pastSnapshotDelegationRewards)
-        }
-      }
-  }
-
   _initializeIndexerSnapshotEntity(): void {
     // Lazy load the snapshot
     let indexerSnapshotEntity = IndexerSnapshotEntity.load(this.id)
@@ -71,11 +50,9 @@ export class IndexerSnapshot {
       indexerSnapshotEntity.delegatedStakeInitial = zeroBD()
       indexerSnapshotEntity.ownStakeDelta = zeroBD()
       indexerSnapshotEntity.delegatedStakeDelta = zeroBD()
-      indexerSnapshotEntity.delegationRewards = zeroBD()
+      indexerSnapshotEntity.delegationPoolIndexingRewards = zeroBD()
+      indexerSnapshotEntity.delegationPoolQueryFees = zeroBD()
       indexerSnapshotEntity.parametersChangeCount = 0
-      indexerSnapshotEntity.previousDelegationRewardsDay = zeroBD()
-      indexerSnapshotEntity.previousDelegationRewardsWeek = zeroBD()
-      indexerSnapshotEntity.previousDelegationRewardsMonth = zeroBD()
 
       if(this.indexerEntity.ownStake != null) {
         indexerSnapshotEntity.ownStakeInitial = this.indexerEntity.ownStake as BigDecimal
@@ -87,7 +64,6 @@ export class IndexerSnapshot {
     }
 
     this.indexerSnapshotEntity = indexerSnapshotEntity as IndexerSnapshotEntity
-    this._updatePastRewards()
   }
 
   //--- GETTERS ---//
@@ -95,8 +71,24 @@ export class IndexerSnapshot {
     return this._snapshotIdFromDays(zeroBI())
   }
 
-  get previousDelegationRewardsMonth(): BigDecimal {
-    return this.indexerSnapshotEntity.previousDelegationRewardsMonth as BigDecimal
+  previousMonthRewards(): BigDecimal {
+    let totalRewards = zeroBD()
+
+    // Determine the previous day rewards
+    for(let i=1; i<31; i++) {
+      // Deterime the ID of the snapshot
+      let pastSnapshotId = this._snapshotIdFromDays(BigInt.fromI32(i))
+      let pastSnapshot = IndexerSnapshotEntity.load(pastSnapshotId)
+      
+      // If a snapshot is found, update previous counters
+      if(pastSnapshot != null) {
+        totalRewards = totalRewards.plus(pastSnapshot.delegationPoolIndexingRewards)
+        totalRewards = totalRewards.plus(pastSnapshot.delegationPoolQueryFees)
+      }
+    }
+
+    return totalRewards
+  
   }
 
   //-- SETTERS --//
@@ -110,8 +102,13 @@ export class IndexerSnapshot {
     this.indexerSnapshotEntity.save()
   }
 
-  addDelegationPoolRewards(amount: BigDecimal): void {
-    this.indexerSnapshotEntity.delegationRewards = this.indexerSnapshotEntity.delegationRewards.plus(amount)
+  addDelegationPoolIndexingRewards(amount: BigDecimal): void {
+    this.indexerSnapshotEntity.delegationPoolIndexingRewards = this.indexerSnapshotEntity.delegationPoolIndexingRewards.plus(amount)
+    this.indexerSnapshotEntity.save()
+  }
+
+  addDelegationPoolQueryFees(amount: BigDecimal): void {
+    this.indexerSnapshotEntity.delegationPoolQueryFees = this.indexerSnapshotEntity.delegationPoolQueryFees.plus(amount)
     this.indexerSnapshotEntity.save()
   }
 
