@@ -23,6 +23,8 @@ dataSources:
       abis:
         - name: Staking
           file: ./abis/Staking.json
+        - name: GraphTokenLockWallet
+          file: ./abis/GraphTokenLockWallet.json
       eventHandlers:
         - event: StakeDeposited(indexed address,uint256)
           handler: handleStakeDeposited

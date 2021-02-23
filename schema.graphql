@@ -53,6 +53,27 @@ type Indexer @entity {
   "Last Snapshot of changes for this indexer"
   lastSnapshot: IndexerSnapshot
 
+  "Indexer vesting contract (if any)"
+  vesting: IndexerVesting
+
+}
+
+"""
+Indexer Vesting contract
+"""
+type IndexerVesting @entity {
+  "Ethereum address of the Indexer"
+  id: ID!
+
+  "Indexer entity"
+  indexer: Indexer!
+
+  "Ethereum address of the Beneficiary"
+  beneficiary: Bytes!
+
+  "Amount of GRT managed by the vesting contract"
+  managedAmount: BigDecimal!
+
 }
 
 """

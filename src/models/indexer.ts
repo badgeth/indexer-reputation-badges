@@ -11,6 +11,8 @@ import {
 
 import { IndexerSnapshot } from "./indexerSnapshot"
 import { IndexerParameterUpdate } from "./indexerParameterUpdate"
+import { IndexerVesting } from "./indexerVesting"
+
 
 import {
   StakeDeposited,
@@ -65,6 +67,11 @@ export class Indexer {
       indexerEntity.isOverDelegated = false
       indexerEntity.delegationPoolShares = oneBI()
       indexerEntity.monthlyDelegatorRewardRate = zeroBD()
+
+      let vestingDetails = new IndexerVesting(address)
+      if(vestingDetails.isVesting) {
+        indexerEntity.vesting = vestingDetails.indexerVestingEntity.id
+      }
     }
     this.indexerEntity = indexerEntity as IndexerEntity
     this.currentBlock = currentBlock
