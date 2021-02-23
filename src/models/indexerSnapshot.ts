@@ -108,7 +108,7 @@ export class IndexerSnapshot {
   }
 
   incrementParametersChangesCount(): void {
-    this.indexerSnapshotEntity.parametersChangeCount++
+    this.indexerSnapshotEntity.parametersChangeCount = this.indexerSnapshotEntity.parametersChangeCount + 1
     this.indexerSnapshotEntity.save()
   }
 }
