@@ -13,14 +13,9 @@ import {
   zeroBD,
   protocolGenesis,
   oneDay,
+  zeroBI,
 } from '../helpers/constants'
 
-// Function to generate a snapshot ID
-function buildSnapshotId(indexerEntity: IndexerEntity, timestamp: BigInt): string {
-  let snapshotDay = timestamp.minus(protocolGenesis()).div(oneDay())
-  let snapshotId = indexerEntity.id.concat('-').concat(snapshotDay.toString())
-  return snapshotId
-}
 
 // A class to manage Indexer Snapshot
 export class IndexerSnapshot {
@@ -32,15 +27,46 @@ export class IndexerSnapshot {
   constructor(indexerEntity: IndexerEntity, currentBlock: ethereum.Block) {
     this.currentBlock = currentBlock
     this.indexerEntity = indexerEntity
+    this._initializeIndexerSnapshotEntity()
+  }
 
+  //--- INTERNAL ---//
+  _snapshotIdFromDays(pastDays: BigInt): string {
+    let daysSinceGenesis = this.currentBlock.timestamp.minus(protocolGenesis()).div(oneDay())
+    let snapshotDays = daysSinceGenesis.minus(pastDays)    
+    let snapshotId = this.indexerEntity.id.concat('-').concat(snapshotDays.toString())
+    return snapshotId
+  }
+
+  _updatePastRewards(): void {
+      // Determine the previous day rewards
+      for(let i=1; i<31; i++) {
+        // Deterime the ID of the snapshot
+        let pastSnapshotId = this._snapshotIdFromDays(BigInt.fromI32(i))
+        let pastSnapshot = IndexerSnapshotEntity.load(pastSnapshotId)
+        
+        // If a snapshot is found, update previous counters
+        if(pastSnapshot != null) {
+          let pastSnapshotDelegationRewards = pastSnapshot.delegationRewards
+          if(i == 1) {
+            this.indexerSnapshotEntity.previousDelegationRewardsDay = this.indexerSnapshotEntity.previousDelegationRewardsDay.plus(pastSnapshotDelegationRewards)
+          }
+          if(i < 8) {
+            this.indexerSnapshotEntity.previousDelegationRewardsWeek = this.indexerSnapshotEntity.previousDelegationRewardsWeek.plus(pastSnapshotDelegationRewards)
+          }
+          this.indexerSnapshotEntity.previousDelegationRewardsMonth = this.indexerSnapshotEntity.previousDelegationRewardsMonth.plus(pastSnapshotDelegationRewards)
+        }
+      }
+  }
+
+  _initializeIndexerSnapshotEntity(): void {
     // Lazy load the snapshot
-    let snapshotId = buildSnapshotId(this.indexerEntity, this.currentBlock.timestamp)
-    let indexerSnapshotEntity = IndexerSnapshotEntity.load(snapshotId)
+    let indexerSnapshotEntity = IndexerSnapshotEntity.load(this.id)
     if(indexerSnapshotEntity == null) {
       // Basic Initialization
-      indexerSnapshotEntity = new IndexerSnapshotEntity(snapshotId)
+      indexerSnapshotEntity = new IndexerSnapshotEntity(this.id)
       indexerSnapshotEntity.indexer = this.indexerEntity.id
-      indexerSnapshotEntity.createdAtTimestamp = currentBlock.timestamp
+      indexerSnapshotEntity.createdAtTimestamp = this.currentBlock.timestamp
       indexerSnapshotEntity.ownStakeInitial = zeroBD()
       indexerSnapshotEntity.delegatedStakeInitial = zeroBD()
       indexerSnapshotEntity.ownStakeDelta = zeroBD()
@@ -58,33 +84,15 @@ export class IndexerSnapshot {
       if(this.indexerEntity.delegatedStake != null) {
         indexerSnapshotEntity.delegatedStakeInitial = this.indexerEntity.delegatedStake as BigDecimal
       }
-
-      // Determine the previous day rewards
-      for(let i=1; i<31; i++) {
-        // Deterime the ID of the snapshot
-        let pastSnapshotId = buildSnapshotId(this.indexerEntity, currentBlock.timestamp.minus(BigInt.fromI32(i).times(oneDay())))
-        let pastSnapshot = IndexerSnapshotEntity.load(pastSnapshotId)
-        
-        // If a snapshot is found, update previous counters
-        if(pastSnapshot != null) {
-          let pastSnapshotDelegationRewards = pastSnapshot.delegationRewards
-          if(i == 1) {
-            this.indexerSnapshotEntity.previousDelegationRewardsDay = indexerSnapshotEntity.previousDelegationRewardsDay.plus(pastSnapshotDelegationRewards)
-          }
-          if(i < 8) {
-            this.indexerSnapshotEntity.previousDelegationRewardsWeek = indexerSnapshotEntity.previousDelegationRewardsWeek.plus(pastSnapshotDelegationRewards)
-          }
-          this.indexerSnapshotEntity.previousDelegationRewardsMonth = indexerSnapshotEntity.previousDelegationRewardsMonth.plus(pastSnapshotDelegationRewards)
-        }
-      }
     }
 
     this.indexerSnapshotEntity = indexerSnapshotEntity as IndexerSnapshotEntity
+    this._updatePastRewards()
   }
 
   //--- GETTERS ---//
   get id(): string {
-    return this.indexerSnapshotEntity.id
+    return this._snapshotIdFromDays(zeroBI())
   }
 
   get previousDelegationRewardsMonth(): BigDecimal {
