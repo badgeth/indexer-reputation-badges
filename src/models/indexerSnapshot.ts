@@ -88,7 +88,25 @@ export class IndexerSnapshot {
     }
 
     return totalRewards
-  
+
+  }
+
+  previousMonthParametersUpdateCount(): i32 {
+    let totalUpdates = 0
+    // Determine the previous day changes
+    for(let i=1; i<31; i++) {
+      // Deterime the ID of the snapshot
+      let pastSnapshotId = this._snapshotIdFromDays(BigInt.fromI32(i))
+      let pastSnapshot = IndexerSnapshotEntity.load(pastSnapshotId)
+      
+      // If a snapshot is found, update previous counters
+      if(pastSnapshot != null) {
+        totalUpdates = totalUpdates + pastSnapshot.parametersChangeCount
+      }
+    }
+
+    return totalUpdates
+
   }
 
   //-- SETTERS --//

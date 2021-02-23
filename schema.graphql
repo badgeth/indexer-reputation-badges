@@ -41,20 +41,20 @@ type Indexer @entity {
   "Block until the Delegator Parameters can not be modified"
   delegatorParameterCooldownBlock: BigInt
 
-  "Monthly reward per GRT token delegated"
-  monthlyDelegatorRewardRate: BigDecimal
+  "Reward per GRT token delegated over the last 30 days"
+  lastMonthDelegatorRewardRate: BigDecimal
+
+  "Number of updates on the parameters over the last 30 days"
+  lastMonthParametersUpdateCount: Int
+
+  "Indexer vesting contract (if any)"
+  vesting: IndexerVesting
 
   "Historical updates of parameters made by the Indexer"
   parameterUpdates: [IndexerParameterUpdate!] @derivedFrom(field: "indexer")
 
   "Snapshots of changes for this indexer"
   snapshots: [IndexerSnapshot!] @derivedFrom(field: "indexer")
-
-  "Last Snapshot of changes for this indexer"
-  lastSnapshot: IndexerSnapshot
-
-  "Indexer vesting contract (if any)"
-  vesting: IndexerVesting
 
 }
 

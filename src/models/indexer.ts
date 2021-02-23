@@ -66,7 +66,8 @@ export class Indexer {
       indexerEntity.delegationRatio = zeroBD()
       indexerEntity.isOverDelegated = false
       indexerEntity.delegationPoolShares = oneBI()
-      indexerEntity.monthlyDelegatorRewardRate = zeroBD()
+      indexerEntity.lastMonthDelegatorRewardRate = zeroBD()
+      indexerEntity.lastMonthParametersUpdateCount = 0
 
       let vestingDetails = new IndexerVesting(address)
       if(vestingDetails.isVesting) {
@@ -154,18 +155,22 @@ export class Indexer {
   }
 
   // Determine the monthly reward rate for delegator
-  get monthlyDelegatorRewardRate(): BigDecimal {
+  get lastMonthDelegatorRewardRate(): BigDecimal {
     if(this.delegatedStake.equals(zeroBD())) {
       return zeroBD()
     }
     return this.snapshot.previousMonthRewards().div(this.delegatedStake)
   }
 
+  // Determine the number of changes on parameters over the last month
+  get lastMonthParametersUpdateCount(): i32 {
+    return this.snapshot.previousMonthParametersUpdateCount()
+  }
+
   // Update the indexer own stake
   updateOwnStake(ownStakeDelta: BigDecimal): void {
     // Add the difference in the snapshot
     this.snapshot.updateOwnStake(ownStakeDelta)
-    this.indexerEntity.lastSnapshot = this.snapshot.id
 
     // Update the own stake and other parameters
     this.indexerEntity.ownStake = this.ownStake.plus(ownStakeDelta)
@@ -180,7 +185,6 @@ export class Indexer {
   updateDelegatedStake(delegatedStakeDelta: BigDecimal, delegationPoolSharesDelta: BigInt): void {
     // Add the difference in the snapshot
     this.snapshot.updateDelegatedStake(delegatedStakeDelta)
-    this.indexerEntity.lastSnapshot = this.snapshot.id
 
     // Update the delegation and other parameters
     this.indexerEntity.delegatedStake = this.delegatedStake.plus(delegatedStakeDelta)
@@ -188,7 +192,7 @@ export class Indexer {
     this.indexerEntity.isOverDelegated = this.isOverDelegated
     this.indexerEntity.allocationRatio = this.allocationRatio
     this.indexerEntity.delegationRatio = this.delegationRatio
-    this.indexerEntity.monthlyDelegatorRewardRate = this.monthlyDelegatorRewardRate
+    this.indexerEntity.lastMonthDelegatorRewardRate = this.lastMonthDelegatorRewardRate
     this.indexerEntity.save()
   }
 
@@ -318,6 +322,7 @@ export class Indexer {
     this.indexerEntity.queryFeeCutRatio = newQueryFeeCutRatio
     indexerParameterUpdate.registerUpdate(newIndexingRewardCutRatio, newQueryFeeCutRatio)
     this.snapshot.incrementParametersChangesCount()
+    this.indexerEntity.lastMonthParametersUpdateCount = this.lastMonthParametersUpdateCount
     
     // Update the cooldown block
     if(event.params.cooldownBlocks.isZero()) {
