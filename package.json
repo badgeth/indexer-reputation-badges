@@ -7,9 +7,13 @@
   "license": "GPL-3.0-only",
   "private": false,
   "scripts": {
+    "build-contract": "solc contracts/Gravity.sol --abi -o abis --overwrite && solc contracts/Gravity.sol --bin -o bin --overwrite",
+    "create": "graph create makeitrein/mini-musk --node https://api.thegraph.com/deploy/",
+    "create-local": "graph create makeitrein/mini-musk --node http://127.0.0.1:8020",
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ --ipfs https://api.thegraph.com/ipfs/ mtahon/indexer-kpi"
+    "deploy": "graph deploy makeitrein/mini-musk --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
+    "deploy-local": "graph deploy makeitrein/mini-musk --ipfs http://localhost:5001 --node http://127.0.0.1:8020"
   },
   "devDependencies": {
     "@graphprotocol/graph-cli": "graphprotocol/graph-cli",
@@ -17,6 +21,11 @@
   },
   "dependencies": {
     "@graphprotocol/contracts": "graphprotocol/contracts",
-    "@graphprotocol/graph-ts": "graphprotocol/graph-ts"
+    "@graphprotocol/graph-ts": "graphprotocol/graph-ts",
+    "babel-polyfill": "^6.26.0",
+    "babel-register": "^6.26.0",
+    "truffle": "^5.0.4",
+    "truffle-contract": "^4.0.5",
+    "truffle-hdwallet-provider": "^1.0.4"
   }
 }
