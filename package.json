@@ -1,9 +1,9 @@
 {
-  "name": "indexer-kpi-subgraph",
+  "name": "Indexer Reputation Badges",
   "version": "0.0.1",
-  "description": "A subgraph to track The Graph indexer KPI",
+  "description": "Awards NFT badges to indexers for metrics & behavior.",
   "repository": "https://github.com/mtahon/indexer-kpi-subgraph",
-  "author": "Mathieu TAHON <mathieu.tahon@noath.net>",
+  "author": "Jordan Rein",
   "license": "GPL-3.0-only",
   "private": false,
   "scripts": {
