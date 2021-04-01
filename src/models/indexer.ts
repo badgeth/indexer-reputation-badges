@@ -1,220 +1,212 @@
-import { 
-  Address,
-  BigInt,
-  BigDecimal,
-  ethereum,
-} from "@graphprotocol/graph-ts"
-
+import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
+import { RewardsAssigned } from "../../generated/RewardsManager/RewardsManager";
+import { Indexer as IndexerEntity } from "../../generated/schema";
 import {
-  Indexer as IndexerEntity,
-} from "../../generated/schema"
-
-import { IndexerSnapshot } from "./indexerSnapshot"
-import { IndexerParameterUpdate } from "./indexerParameterUpdate"
-import { IndexerVesting } from "./indexerVesting"
-
-
-import {
-  StakeDeposited,
-  StakeLocked,
-  StakeWithdrawn,
-  StakeSlashed,
+  AllocationClosed,
+  AllocationCollected,
+  AllocationCreated,
   DelegationParametersUpdated,
+  RebateClaimed,
   StakeDelegated,
   StakeDelegatedLocked,
   StakeDelegatedWithdrawn,
-  AllocationCreated,
-  AllocationCollected,
-  AllocationClosed,
-  RebateClaimed,
-} from '../../generated/Staking/Staking'
-
-import {
-  RewardsAssigned,
-} from '../../generated/RewardsManager/RewardsManager'
-
-import { tokenAmountToDecimal } from '../helpers/token'
-import { feeCutToDecimalRatio } from '../helpers/feeCut'
-import { 
-  zeroBD,
-  sixteenBD,
-  oneBI,
-  zeroBI,
-} from '../helpers/constants'
+  StakeDeposited,
+  StakeLocked,
+  StakeSlashed,
+  StakeWithdrawn,
+} from "../../generated/Staking/Staking";
+import { oneBI, sixteenBD, zeroBD, zeroBI } from "../helpers/constants";
+import { feeCutToDecimalRatio } from "../helpers/feeCut";
+import { tokenAmountToDecimal } from "../helpers/token";
+import { IndexerParameterUpdate } from "./indexerParameterUpdate";
+import { IndexerSnapshot } from "./indexerSnapshot";
+import { IndexerVesting } from "./indexerVesting";
 
 // A class to manage Indexer
 export class Indexer {
-  indexerEntity: IndexerEntity
-  currentBlock: ethereum.Block
-  _snapshot: IndexerSnapshot | null
-  _delegatedStake: BigDecimal
-  _ownStake: BigDecimal
-  _allocatedStake: BigDecimal
-
+  indexerEntity: IndexerEntity;
+  currentBlock: ethereum.Block;
+  _snapshot: IndexerSnapshot | null;
+  _delegatedStake: BigDecimal;
+  _ownStake: BigDecimal;
+  _allocatedStake: BigDecimal;
 
   // Initialize an Indexer using its address
   constructor(address: Address, currentBlock: ethereum.Block) {
-    let indexerEntity = IndexerEntity.load(address.toHex())
-    if(indexerEntity == null) {
-      indexerEntity = new IndexerEntity(address.toHex())
-      indexerEntity.createdAtTimestamp = currentBlock.timestamp
-      indexerEntity.ownStake = zeroBD()
-      indexerEntity.delegatedStake = zeroBD()
-      indexerEntity.allocatedStake = zeroBD()
-      indexerEntity.maximumDelegation = zeroBD()
-      indexerEntity.allocationRatio = zeroBD()
-      indexerEntity.delegationRatio = zeroBD()
-      indexerEntity.isOverDelegated = false
-      indexerEntity.delegationPoolShares = oneBI()
-      indexerEntity.lastMonthDelegatorRewardRate = zeroBD()
-      indexerEntity.lastMonthParametersUpdateCount = 0
+    let indexerEntity = IndexerEntity.load(address.toHex());
+    if (indexerEntity == null) {
+      indexerEntity = new IndexerEntity(address.toHex());
+      indexerEntity.createdAtTimestamp = currentBlock.timestamp;
+      indexerEntity.ownStake = zeroBD();
+      indexerEntity.delegatedStake = zeroBD();
+      indexerEntity.allocatedStake = zeroBD();
+      indexerEntity.maximumDelegation = zeroBD();
+      indexerEntity.allocationRatio = zeroBD();
+      indexerEntity.delegationRatio = zeroBD();
+      indexerEntity.isOverDelegated = false;
+      indexerEntity.delegationPoolShares = oneBI();
+      indexerEntity.lastMonthDelegatorRewardRate = zeroBD();
+      indexerEntity.lastMonthParametersUpdateCount = 0;
+      indexerEntity.slashCount = 0;
 
-      let vestingDetails = new IndexerVesting(address)
-      if(vestingDetails.isVesting) {
-        indexerEntity.vesting = vestingDetails.indexerVestingEntity.id
+      let vestingDetails = new IndexerVesting(address);
+      if (vestingDetails.isVesting) {
+        indexerEntity.vesting = vestingDetails.indexerVestingEntity.id;
       }
     }
-    this.indexerEntity = indexerEntity as IndexerEntity
-    this.currentBlock = currentBlock
-    this._snapshot = null
-    this._delegatedStake = indexerEntity.delegatedStake as BigDecimal
-    this._ownStake = indexerEntity.ownStake as BigDecimal
-    this._allocatedStake = indexerEntity.allocatedStake as BigDecimal
+    this.indexerEntity = indexerEntity as IndexerEntity;
+    this.currentBlock = currentBlock;
+    this._snapshot = null;
+    this._delegatedStake = indexerEntity.delegatedStake as BigDecimal;
+    this._ownStake = indexerEntity.ownStake as BigDecimal;
+    this._allocatedStake = indexerEntity.allocatedStake as BigDecimal;
   }
 
   //=============== Getters and Setters ===============//
   // Indexer ID
   get id(): string {
-    return this.indexerEntity.id
+    return this.indexerEntity.id;
   }
 
   // Indexer own stake
   get ownStake(): BigDecimal {
-    return this._ownStake
+    return this._ownStake;
   }
 
   // Indexer delegated stake
   get delegatedStake(): BigDecimal {
-    return this._delegatedStake
+    return this._delegatedStake;
   }
 
   // Shares of the delegation pool
   get delegationPoolShares(): BigInt {
-    if(this.indexerEntity.delegationPoolShares == null) {
-      return zeroBI()
+    if (this.indexerEntity.delegationPoolShares == null) {
+      return zeroBI();
     }
-    return this.indexerEntity.delegationPoolShares as BigInt
+    return this.indexerEntity.delegationPoolShares as BigInt;
   }
 
   // Indexer allocated stake
   get allocatedStake(): BigDecimal {
-    return this._allocatedStake
+    return this._allocatedStake;
   }
 
   // Indexer Maximum Delegation
   get maximumDelegation(): BigDecimal {
-    return this.ownStake.times(sixteenBD())
+    return this.ownStake.times(sixteenBD());
   }
 
   // Defines if the Indexer is over delegated
   get isOverDelegated(): boolean {
-    return this.delegatedStake.gt(this.maximumDelegation)
+    return this.delegatedStake.gt(this.maximumDelegation);
   }
 
   // Defines the allocation ratio
   get allocationRatio(): BigDecimal {
     // Determine allocation capacity
-    let allocationCapacity = this.ownStake
-    if(this.isOverDelegated) {
-      allocationCapacity = allocationCapacity.plus(this.maximumDelegation)
+    let allocationCapacity = this.ownStake;
+    if (this.isOverDelegated) {
+      allocationCapacity = allocationCapacity.plus(this.maximumDelegation);
     } else {
-      allocationCapacity = allocationCapacity.plus(this.delegatedStake)
+      allocationCapacity = allocationCapacity.plus(this.delegatedStake);
     }
 
     // Avoid zero division
-    if(allocationCapacity.equals(zeroBD())) {
-      return zeroBD()
+    if (allocationCapacity.equals(zeroBD())) {
+      return zeroBD();
     }
 
-    return this.allocatedStake.div(allocationCapacity)
+    return this.allocatedStake.div(allocationCapacity);
   }
 
   // Defines the delegation ratio
   get delegationRatio(): BigDecimal {
-    if(this.ownStake.equals(zeroBD())) {
-      return zeroBD()
+    if (this.ownStake.equals(zeroBD())) {
+      return zeroBD();
     }
-    return this.delegatedStake.div(this.maximumDelegation)
+    return this.delegatedStake.div(this.maximumDelegation);
   }
 
   get snapshot(): IndexerSnapshot {
-    if(this._snapshot == null) {
-      this._snapshot = new IndexerSnapshot(this.indexerEntity, this.currentBlock)
+    if (this._snapshot == null) {
+      this._snapshot = new IndexerSnapshot(
+        this.indexerEntity,
+        this.currentBlock
+      );
     }
-    return this._snapshot as IndexerSnapshot
+    return this._snapshot as IndexerSnapshot;
   }
 
   // Determine the monthly reward rate for delegator
   get lastMonthDelegatorRewardRate(): BigDecimal {
-    if(this.delegatedStake.equals(zeroBD())) {
-      return zeroBD()
+    if (this.delegatedStake.equals(zeroBD())) {
+      return zeroBD();
     }
-    return this.snapshot.previousMonthRewards().div(this.delegatedStake)
+    return this.snapshot.previousMonthRewards().div(this.delegatedStake);
   }
 
   // Determine the number of changes on parameters over the last month
   get lastMonthParametersUpdateCount(): i32 {
-    return this.snapshot.previousMonthParametersUpdateCount()
+    return this.snapshot.previousMonthParametersUpdateCount();
   }
 
   // Update the indexer own stake
   updateOwnStake(ownStakeDelta: BigDecimal): void {
     // Add the difference in the snapshot
-    this.snapshot.updateOwnStake(ownStakeDelta)
+    this.snapshot.updateOwnStake(ownStakeDelta);
 
     // Update the own stake and other parameters
-    this.indexerEntity.ownStake = this.ownStake.plus(ownStakeDelta)
-    this.indexerEntity.maximumDelegation = this.maximumDelegation
-    this.indexerEntity.isOverDelegated = this.isOverDelegated
-    this.indexerEntity.allocationRatio = this.allocationRatio
-    this.indexerEntity.delegationRatio = this.delegationRatio
-    this.indexerEntity.save()
+    this.indexerEntity.ownStake = this.ownStake.plus(ownStakeDelta);
+    this.indexerEntity.maximumDelegation = this.maximumDelegation;
+    this.indexerEntity.isOverDelegated = this.isOverDelegated;
+    this.indexerEntity.allocationRatio = this.allocationRatio;
+    this.indexerEntity.delegationRatio = this.delegationRatio;
+    this.indexerEntity.save();
   }
 
   // Update the indexer delegated stake
-  updateDelegatedStake(delegatedStakeDelta: BigDecimal, delegationPoolSharesDelta: BigInt): void {
+  updateDelegatedStake(
+    delegatedStakeDelta: BigDecimal,
+    delegationPoolSharesDelta: BigInt
+  ): void {
     // Add the difference in the snapshot
-    this.snapshot.updateDelegatedStake(delegatedStakeDelta)
+    this.snapshot.updateDelegatedStake(delegatedStakeDelta);
 
     // Update the delegation and other parameters
-    this.indexerEntity.delegatedStake = this.delegatedStake.plus(delegatedStakeDelta)
-    this.indexerEntity.delegationPoolShares = this.delegationPoolShares.plus(delegationPoolSharesDelta)
-    this.indexerEntity.isOverDelegated = this.isOverDelegated
-    this.indexerEntity.allocationRatio = this.allocationRatio
-    this.indexerEntity.delegationRatio = this.delegationRatio
-    this.indexerEntity.lastMonthDelegatorRewardRate = this.lastMonthDelegatorRewardRate
-    this.indexerEntity.save()
+    this.indexerEntity.delegatedStake = this.delegatedStake.plus(
+      delegatedStakeDelta
+    );
+    this.indexerEntity.delegationPoolShares = this.delegationPoolShares.plus(
+      delegationPoolSharesDelta
+    );
+    this.indexerEntity.isOverDelegated = this.isOverDelegated;
+    this.indexerEntity.allocationRatio = this.allocationRatio;
+    this.indexerEntity.delegationRatio = this.delegationRatio;
+    this.indexerEntity.lastMonthDelegatorRewardRate = this.lastMonthDelegatorRewardRate;
+    this.indexerEntity.save();
   }
 
   // Update the indexer delegated stake
   updateAllocatedStake(newAllocatedStakeDelta: BigDecimal): void {
-    this.indexerEntity.allocatedStake = this.allocatedStake.plus(newAllocatedStakeDelta)
-    this.indexerEntity.allocationRatio = this.allocationRatio
-    this.indexerEntity.save()
+    this.indexerEntity.allocatedStake = this.allocatedStake.plus(
+      newAllocatedStakeDelta
+    );
+    this.indexerEntity.allocationRatio = this.allocationRatio;
+    this.indexerEntity.save();
   }
 
   //=============== Event Handlers ===============//
   // Handles a stake deposit
   handleStakeDeposited(event: StakeDeposited): void {
     // Update the deposit
-    let indexerStakeDeposited = tokenAmountToDecimal(event.params.tokens)
-    this.updateOwnStake(indexerStakeDeposited)
+    let indexerStakeDeposited = tokenAmountToDecimal(event.params.tokens);
+    this.updateOwnStake(indexerStakeDeposited);
   }
 
   // Handles a stake locked (=unstaked)
   handleStakeLocked(event: StakeLocked): void {
-    let indexerStakeLocked = tokenAmountToDecimal(event.params.tokens)
-    this.updateOwnStake(indexerStakeLocked.neg())
+    let indexerStakeLocked = tokenAmountToDecimal(event.params.tokens);
+    this.updateOwnStake(indexerStakeLocked.neg());
   }
 
   // Handles a stake withdrawl
@@ -223,28 +215,25 @@ export class Indexer {
 
   // Handles a stake slashing
   handleStakeSlashed(event: StakeSlashed): void {
-    let indexerStakeSlashed = tokenAmountToDecimal(event.params.tokens)
-    this.updateOwnStake(indexerStakeSlashed.neg())
+    let indexerStakeSlashed = tokenAmountToDecimal(event.params.tokens);
+    this.updateOwnStake(indexerStakeSlashed.neg());
   }
 
   // Handles a stake delegation
   handleStakeDelegated(event: StakeDelegated): void {
-    let indexerStakeDelegated = tokenAmountToDecimal(event.params.tokens)
-    let mintedShares = event.params.shares
-    this.updateDelegatedStake(
-      indexerStakeDelegated,
-      mintedShares
-    )
+    let indexerStakeDelegated = tokenAmountToDecimal(event.params.tokens);
+    let mintedShares = event.params.shares;
+    this.updateDelegatedStake(indexerStakeDelegated, mintedShares);
   }
 
   // Handles a delegated stake lock
   handleStakeDelegatedLocked(event: StakeDelegatedLocked): void {
-    let burnedShares = event.params.shares
-    let indexerStakeDelegatedLocked = tokenAmountToDecimal(event.params.tokens)
+    let burnedShares = event.params.shares;
+    let indexerStakeDelegatedLocked = tokenAmountToDecimal(event.params.tokens);
     this.updateDelegatedStake(
       indexerStakeDelegatedLocked.neg(),
       burnedShares.neg()
-    )
+    );
   }
 
   // Handles a stake delegation withdrawn
@@ -253,8 +242,8 @@ export class Indexer {
 
   // Handles an allocation creation
   handleAllocationCreated(event: AllocationCreated): void {
-    let indexerAllocatedTokens = tokenAmountToDecimal(event.params.tokens)
-    this.updateAllocatedStake(indexerAllocatedTokens)
+    let indexerAllocatedTokens = tokenAmountToDecimal(event.params.tokens);
+    this.updateAllocatedStake(indexerAllocatedTokens);
   }
 
   // Handles an allocation collection
@@ -263,76 +252,83 @@ export class Indexer {
 
   // Handles an allocation closure
   handleAllocationClosed(event: AllocationClosed): void {
-    let indexerAllocationTokens = tokenAmountToDecimal(event.params.tokens)
-    this.updateAllocatedStake(indexerAllocationTokens.neg())
+    let indexerAllocationTokens = tokenAmountToDecimal(event.params.tokens);
+    this.updateAllocatedStake(indexerAllocationTokens.neg());
   }
 
   // Handle the assignment of reward
   // NOTE: Indexer rewards is not automatically restaked
   handleRewardsAssigned(event: RewardsAssigned): void {
     // Determine the rewards
-    let rewardedIndexingTokens = tokenAmountToDecimal(event.params.amount)
-    let indexerIndexingRewards = zeroBD()
-    let delegatorIndexingRewards = zeroBD()
+    let rewardedIndexingTokens = tokenAmountToDecimal(event.params.amount);
+    let indexerIndexingRewards = zeroBD();
+    let delegatorIndexingRewards = zeroBD();
 
     // If nothing is delegated, everything is for the Indexer
-    if(this.delegatedStake.equals(zeroBD())) {
-      indexerIndexingRewards = rewardedIndexingTokens
-    } 
-    
+    if (this.delegatedStake.equals(zeroBD())) {
+      indexerIndexingRewards = rewardedIndexingTokens;
+    }
+
     // Otherwise it is split as per the cut
     else {
-      indexerIndexingRewards = rewardedIndexingTokens.times(this.indexerEntity.indexingRewardCutRatio as BigDecimal)
-      delegatorIndexingRewards = rewardedIndexingTokens.minus(indexerIndexingRewards)
+      indexerIndexingRewards = rewardedIndexingTokens.times(
+        this.indexerEntity.indexingRewardCutRatio as BigDecimal
+      );
+      delegatorIndexingRewards = rewardedIndexingTokens.minus(
+        indexerIndexingRewards
+      );
     }
 
     // Save the rewards in the snapshot
-    this.snapshot.addDelegationPoolIndexingRewards(delegatorIndexingRewards)
+    this.snapshot.addDelegationPoolIndexingRewards(delegatorIndexingRewards);
 
     // Update the delegated since they are compounded
-    this.updateDelegatedStake(
-      delegatorIndexingRewards,
-      zeroBI()
-    )
+    this.updateDelegatedStake(delegatorIndexingRewards, zeroBI());
   }
 
   // Handles a rebate claim (=Query Fees)
   // NOTE: If the Indexer part is re-staked, it is handled in the StakeDeposit event
   handleRebateClaimed(event: RebateClaimed): void {
     // Increase the delegated tokens as they are automatically compounded
-    let delegationFees = tokenAmountToDecimal(event.params.delegationFees)
-    this.updateDelegatedStake(
-      delegationFees,
-      zeroBI()
-    )
+    let delegationFees = tokenAmountToDecimal(event.params.delegationFees);
+    this.updateDelegatedStake(delegationFees, zeroBI());
 
     // Save the rewards in the snapshot
-    this.snapshot.addDelegationPoolIndexingRewards(delegationFees)
+    this.snapshot.addDelegationPoolIndexingRewards(delegationFees);
   }
 
   // Handle a change in Indexer delegation parameters
   handleDelegationParametersUpdated(event: DelegationParametersUpdated): void {
     // Get the new values for the update
-    let newIndexingRewardCutRatio = feeCutToDecimalRatio(event.params.indexingRewardCut)
-    let newQueryFeeCutRatio = feeCutToDecimalRatio(event.params.queryFeeCut)
-    let indexerParameterUpdate = new IndexerParameterUpdate(this.indexerEntity, this.currentBlock)
+    let newIndexingRewardCutRatio = feeCutToDecimalRatio(
+      event.params.indexingRewardCut
+    );
+    let newQueryFeeCutRatio = feeCutToDecimalRatio(event.params.queryFeeCut);
+    let indexerParameterUpdate = new IndexerParameterUpdate(
+      this.indexerEntity,
+      this.currentBlock
+    );
 
     // Update the query fee ratios
-    this.indexerEntity.indexingRewardCutRatio = newIndexingRewardCutRatio
-    this.indexerEntity.queryFeeCutRatio = newQueryFeeCutRatio
-    indexerParameterUpdate.registerUpdate(newIndexingRewardCutRatio, newQueryFeeCutRatio)
-    this.snapshot.incrementParametersChangesCount()
-    this.indexerEntity.lastMonthParametersUpdateCount = this.lastMonthParametersUpdateCount
-    
+    this.indexerEntity.indexingRewardCutRatio = newIndexingRewardCutRatio;
+    this.indexerEntity.queryFeeCutRatio = newQueryFeeCutRatio;
+    indexerParameterUpdate.registerUpdate(
+      newIndexingRewardCutRatio,
+      newQueryFeeCutRatio
+    );
+    this.snapshot.incrementParametersChangesCount();
+    this.indexerEntity.lastMonthParametersUpdateCount = this.lastMonthParametersUpdateCount;
+
     // Update the cooldown block
-    if(event.params.cooldownBlocks.isZero()) {
-      this.indexerEntity.delegatorParameterCooldownBlock = null
+    if (event.params.cooldownBlocks.isZero()) {
+      this.indexerEntity.delegatorParameterCooldownBlock = null;
     } else {
-      this.indexerEntity.delegatorParameterCooldownBlock = event.block.number.plus(event.params.cooldownBlocks)
+      this.indexerEntity.delegatorParameterCooldownBlock = event.block.number.plus(
+        event.params.cooldownBlocks
+      );
     }
 
     // Save the indexer entity
-    this.indexerEntity.save()
+    this.indexerEntity.save();
   }
-
 }

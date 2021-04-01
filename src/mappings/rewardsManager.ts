@@ -1,10 +1,5 @@
-import {
-  RewardsAssigned,
-} from '../../generated/RewardsManager/RewardsManager'
-
-import {
-  Indexer
-} from '../models/indexer'
+import { RewardsAssigned } from "../../generated/RewardsManager/RewardsManager";
+import { Indexer } from "../models/indexer";
 
 /**
  * @dev Emitted when rewards are assigned to an indexer.
@@ -15,6 +10,6 @@ import {
     uint256 amount
  */
 export function handleRewardsAssigned(event: RewardsAssigned): void {
-  let indexer = new Indexer(event.params.indexer, event.block)
-  indexer.handleRewardsAssigned(event)
+  let indexer = new Indexer(event.params.indexer, event.block);
+  indexer.handleRewardsAssigned(event);
 }
