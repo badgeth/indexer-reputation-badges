@@ -1,5 +1,5 @@
 {
-  "name": "Indexer Reputation Badges",
+  "name": "the-graph-roles-kpi-subgraph",
   "version": "0.0.1",
   "description": "Awards NFT badges to indexers for metrics & behavior.",
   "repository": "https://github.com/mtahon/indexer-kpi-subgraph",
@@ -13,7 +13,8 @@
     "codegen": "graph codegen",
     "build": "graph build",
     "deploy": "graph deploy makeitrein/mini-musk --ipfs https://api.thegraph.com/ipfs/ --node https://api.thegraph.com/deploy/",
-    "deploy-local": "graph deploy makeitrein/mini-musk --ipfs http://localhost:5001 --node http://127.0.0.1:8020"
+    "deploy-local": "graph deploy makeitrein/mini-musk --ipfs http://localhost:5001 --node http://127.0.0.1:8020",
+    "prep:addresses:mainnet": "ts-node config/mainnetAddressScript.ts && mustache ./config/generatedAddresses.json ./config/addresses.template.ts > ./config/addresses.ts"
   },
   "devDependencies": {
     "@graphprotocol/graph-cli": "graphprotocol/graph-cli",
@@ -21,9 +22,10 @@
   },
   "dependencies": {
     "@graphprotocol/contracts": "graphprotocol/contracts",
-    "@graphprotocol/graph-ts": "graphprotocol/graph-ts",
+    "@graphprotocol/graph-ts": "^0.20.0",
     "babel-polyfill": "^6.26.0",
     "babel-register": "^6.26.0",
+    "mustache": "^4.2.0",
     "truffle": "^5.0.4",
     "truffle-contract": "^4.0.5",
     "truffle-hdwallet-provider": "^1.0.4"
