@@ -56,6 +56,8 @@ type Indexer @entity {
   "Snapshots of changes for this indexer"
   snapshots: [IndexerSnapshot!] @derivedFrom(field: "indexer")
 
+  "Total number of times Indexer has been slashed"
+  slashCount: Int
 }
 
 """
@@ -73,7 +75,6 @@ type IndexerVesting @entity {
 
   "Amount of GRT managed by the vesting contract"
   managedAmount: BigDecimal!
-
 }
 
 """
@@ -103,7 +104,6 @@ type IndexerParameterUpdate @entity {
 
   "Previous Query Fee Cut Ratio: between 0 and 1"
   previousQueryFeeCutRatio: BigDecimal
-
 }
 
 """
@@ -139,5 +139,52 @@ type IndexerSnapshot @entity {
 
   "Count the number of parameters change"
   parametersChangeCount: Int!
+}
 
+"""
+Delegator with all their delegated stakes towards Indexers
+"""
+type Delegator @entity {
+  "Delegator address"
+  id: ID!
+  "Graph account of the delegator"
+  account: GraphAccount!
+  "Stakes of this delegator"
+  stakes: [DelegatedStake!]! @derivedFrom(field: "delegator")
+  "CUMULATIVE staked tokens in DelegatorStakes of this Delegator"
+  totalStakedTokens: BigInt!
+  "CUMULATIVE unstaked tokens in DelegatorStakes of this Delegator"
+  totalUnstakedTokens: BigInt!
+  "Time created at"
+  createdAt: Int!
+  "Total realized rewards on all delegated stakes. Realized rewards are added when undelegating and realizing a profit"
+  totalRealizedRewards: BigDecimal!
+}
+
+"""
+Delegator stake for a single Indexer
+"""
+type DelegatedStake @entity {
+  "Concatenation of Delegator address and Indexer address"
+  id: ID!
+  "Index the stake is delegated to"
+  indexer: Indexer!
+  "Delegator"
+  delegator: Delegator!
+  "CUMULATIVE tokens delegated"
+  stakedTokens: BigInt!
+  "CUMULATIVE tokens undelegated"
+  unstakedTokens: BigInt!
+  "CURRENT tokens locked"
+  lockedTokens: BigInt!
+  "Epoch the locked tokens get unlocked"
+  lockedUntil: Int!
+  "Shares owned in the delegator pool. Used to calculate total amount delegated"
+  shareAmount: BigInt!
+  "The rate this delegator paid for their shares (calculated using average cost basis). Used for rewards calculations"
+  personalExchangeRate: BigDecimal!
+  "Realized rewards from undelegating and realizing a reward"
+  realizedRewards: BigDecimal!
+  "Time this delegator first delegated to an indexer"
+  createdAt: Int!
 }
