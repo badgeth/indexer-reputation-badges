@@ -37,7 +37,6 @@ export class Indexer {
     if (indexerEntity == null) {
       indexerEntity = new IndexerEntity(address.toHex());
       indexerEntity.createdAtTimestamp = currentBlock.timestamp;
-      console.log(new Date().getTime(), "~~~~~~~~~~~~~");
       indexerEntity.ownStake = zeroBD();
       indexerEntity.delegatedStake = zeroBD();
       indexerEntity.allocatedStake = zeroBD();
