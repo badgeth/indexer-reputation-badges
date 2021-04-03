@@ -142,6 +142,20 @@ type IndexerSnapshot @entity {
 }
 
 """
+Awarded to indexers who become over-delegated
+"""
+type ItsOnlyWaferThinBadge @entity {
+  "Indexer address"
+  id: ID!
+
+  "Unix Timestamp when this indexer was awarded this badge"
+  awardedAtTimestamp: BigInt!
+
+  "Ethereum block when this indexer was awarded this badge"
+  awardedAtBlock: BigInt!
+}
+
+"""
 Delegator with all their delegated stakes towards Indexers
 """
 type Delegator @entity {
