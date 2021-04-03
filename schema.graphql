@@ -56,7 +56,7 @@ type Indexer @entity {
   "Snapshots of changes for this indexer"
   snapshots: [IndexerSnapshot!] @derivedFrom(field: "indexer")
 
-  "Total number of times Indexer has been slashed"
+  "Total number of times"
   slashCount: Int
 }
 
@@ -147,8 +147,6 @@ Delegator with all their delegated stakes towards Indexers
 type Delegator @entity {
   "Delegator address"
   id: ID!
-  "Graph account of the delegator"
-  account: GraphAccount!
   "Stakes of this delegator"
   stakes: [DelegatedStake!]! @derivedFrom(field: "delegator")
   "CUMULATIVE staked tokens in DelegatorStakes of this Delegator"
