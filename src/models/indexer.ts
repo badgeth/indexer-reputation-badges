@@ -37,6 +37,7 @@ export class Indexer {
     if (indexerEntity == null) {
       indexerEntity = new IndexerEntity(address.toHex());
       indexerEntity.createdAtTimestamp = currentBlock.timestamp;
+      console.log(new Date().getTime(), "~~~~~~~~~~~~~");
       indexerEntity.ownStake = zeroBD();
       indexerEntity.delegatedStake = zeroBD();
       indexerEntity.allocatedStake = zeroBD();
@@ -47,7 +48,6 @@ export class Indexer {
       indexerEntity.delegationPoolShares = oneBI();
       indexerEntity.lastMonthDelegatorRewardRate = zeroBD();
       indexerEntity.lastMonthParametersUpdateCount = 0;
-      indexerEntity.slashCount = 0;
 
       let vestingDetails = new IndexerVesting(address);
       if (vestingDetails.isVesting) {
