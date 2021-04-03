@@ -18,10 +18,6 @@ import {
   StakeSlashed,
   StakeWithdrawn,
 } from "../../generated/Staking/Staking";
-import {
-  awardItsOnlyWaferThinBadge,
-  becomesOverDelegated,
-} from "../factories/badges";
 import { dayMonthYearFromEventTimestamp } from "../helpers/dayMonthYear";
 import { Indexer } from "../models/indexer";
 
@@ -37,15 +33,8 @@ export function handleDelegationParametersUpdated(
   event: DelegationParametersUpdated
 ): void {
   let indexer = new Indexer(event.params.indexer, event.block);
-  let isOverDelegated = indexer.indexerEntity.isOverDelegated;
-
   indexer.handleDelegationParametersUpdated(event);
-
-  if (
-    becomesOverDelegated(isOverDelegated, indexer.indexerEntity.isOverDelegated)
-  ) {
-    awardItsOnlyWaferThinBadge(indexer.id, event.block);
-  }
+  indexer.awardBadges();
 }
 
 /**
@@ -60,15 +49,8 @@ export function handleStakeDeposited(event: StakeDeposited): void {
     dayMonthYearFromEventTimestamp(event).month.toString(),
   ]);
 
-  let isOverDelegated = indexer.indexerEntity.isOverDelegated;
-
   indexer.handleStakeDeposited(event);
-
-  if (
-    becomesOverDelegated(isOverDelegated, indexer.indexerEntity.isOverDelegated)
-  ) {
-    awardItsOnlyWaferThinBadge(indexer.id, event.block);
-  }
+  indexer.awardBadges();
 }
 
 /**
@@ -80,16 +62,8 @@ export function handleStakeDeposited(event: StakeDeposited): void {
  */
 export function handleStakeLocked(event: StakeLocked): void {
   let indexer = new Indexer(event.params.indexer, event.block);
-
-  let isOverDelegated = indexer.indexerEntity.isOverDelegated;
-
   indexer.handleStakeLocked(event);
-
-  if (
-    becomesOverDelegated(isOverDelegated, indexer.indexerEntity.isOverDelegated)
-  ) {
-    awardItsOnlyWaferThinBadge(indexer.id, event.block);
-  }
+  indexer.awardBadges();
 }
 
 /**
@@ -100,16 +74,8 @@ export function handleStakeLocked(event: StakeLocked): void {
  */
 export function handleStakeWithdrawn(event: StakeWithdrawn): void {
   let indexer = new Indexer(event.params.indexer, event.block);
-
-  let isOverDelegated = indexer.indexerEntity.isOverDelegated;
-
   indexer.handleStakeWithdrawn(event);
-
-  if (
-    becomesOverDelegated(isOverDelegated, indexer.indexerEntity.isOverDelegated)
-  ) {
-    awardItsOnlyWaferThinBadge(indexer.id, event.block);
-  }
+  indexer.awardBadges();
 }
 
 /**
@@ -124,6 +90,7 @@ export function handleStakeWithdrawn(event: StakeWithdrawn): void {
 export function handleStakeSlashed(event: StakeSlashed): void {
   let indexer = new Indexer(event.params.indexer, event.block);
   indexer.handleStakeSlashed(event);
+  indexer.awardBadges();
 }
 
 /**
@@ -137,16 +104,8 @@ export function handleStakeSlashed(event: StakeSlashed): void {
  */
 export function handleStakeDelegated(event: StakeDelegated): void {
   let indexer = new Indexer(event.params.indexer, event.block);
-
-  let isOverDelegated = indexer.indexerEntity.isOverDelegated;
-
   indexer.handleStakeDelegated(event);
-
-  if (
-    becomesOverDelegated(isOverDelegated, indexer.indexerEntity.isOverDelegated)
-  ) {
-    awardItsOnlyWaferThinBadge(indexer.id, event.block);
-  }
+  indexer.awardBadges();
 }
 
 /**
@@ -161,16 +120,8 @@ export function handleStakeDelegated(event: StakeDelegated): void {
  */
 export function handleStakeDelegatedLocked(event: StakeDelegatedLocked): void {
   let indexer = new Indexer(event.params.indexer, event.block);
-
-  let isOverDelegated = indexer.indexerEntity.isOverDelegated;
-
   indexer.handleStakeDelegatedLocked(event);
-
-  if (
-    becomesOverDelegated(isOverDelegated, indexer.indexerEntity.isOverDelegated)
-  ) {
-    awardItsOnlyWaferThinBadge(indexer.id, event.block);
-  }
+  indexer.awardBadges();
 }
 
 /**
@@ -184,16 +135,8 @@ export function handleStakeDelegatedWithdrawn(
   event: StakeDelegatedWithdrawn
 ): void {
   let indexer = new Indexer(event.params.indexer, event.block);
-
-  let isOverDelegated = indexer.indexerEntity.isOverDelegated;
-
   indexer.handleStakeDelegatedWithdrawn(event);
-
-  if (
-    becomesOverDelegated(isOverDelegated, indexer.indexerEntity.isOverDelegated)
-  ) {
-    awardItsOnlyWaferThinBadge(indexer.id, event.block);
-  }
+  indexer.awardBadges();
 }
 
 /**
@@ -211,16 +154,8 @@ export function handleStakeDelegatedWithdrawn(
  */
 export function handleAllocationCreated(event: AllocationCreated): void {
   let indexer = new Indexer(event.params.indexer, event.block);
-
-  let isOverDelegated = indexer.indexerEntity.isOverDelegated;
-
   indexer.handleAllocationCreated(event);
-
-  if (
-    becomesOverDelegated(isOverDelegated, indexer.indexerEntity.isOverDelegated)
-  ) {
-    awardItsOnlyWaferThinBadge(indexer.id, event.block);
-  }
+  indexer.awardBadges();
 }
 
 /**
@@ -239,16 +174,8 @@ export function handleAllocationCreated(event: AllocationCreated): void {
  */
 export function handleAllocationCollected(event: AllocationCollected): void {
   let indexer = new Indexer(event.params.indexer, event.block);
-
-  let isOverDelegated = indexer.indexerEntity.isOverDelegated;
-
   indexer.handleAllocationCollected(event);
-
-  if (
-    becomesOverDelegated(isOverDelegated, indexer.indexerEntity.isOverDelegated)
-  ) {
-    awardItsOnlyWaferThinBadge(indexer.id, event.block);
-  }
+  indexer.awardBadges();
 }
 
 /**
@@ -270,16 +197,8 @@ export function handleAllocationCollected(event: AllocationCollected): void {
  */
 export function handleAllocationClosed(event: AllocationClosed): void {
   let indexer = new Indexer(event.params.indexer, event.block);
-
-  let isOverDelegated = indexer.indexerEntity.isOverDelegated;
-
   indexer.handleAllocationClosed(event);
-
-  if (
-    becomesOverDelegated(isOverDelegated, indexer.indexerEntity.isOverDelegated)
-  ) {
-    awardItsOnlyWaferThinBadge(indexer.id, event.block);
-  }
+  indexer.awardBadges();
 }
 
 /**
@@ -299,14 +218,6 @@ export function handleAllocationClosed(event: AllocationClosed): void {
  */
 export function handleRebateClaimed(event: RebateClaimed): void {
   let indexer = new Indexer(event.params.indexer, event.block);
-
-  let isOverDelegated = indexer.indexerEntity.isOverDelegated;
-
   indexer.handleRebateClaimed(event);
-
-  if (
-    becomesOverDelegated(isOverDelegated, indexer.indexerEntity.isOverDelegated)
-  ) {
-    awardItsOnlyWaferThinBadge(indexer.id, event.block);
-  }
+  indexer.awardBadges();
 }

@@ -15,6 +15,7 @@ import {
   StakeSlashed,
   StakeWithdrawn,
 } from "../../generated/Staking/Staking";
+import { awardItsOnlyWaferThinBadge } from "../factories/badges";
 import { oneBI, sixteenBD, zeroBD, zeroBI } from "../helpers/constants";
 import { feeCutToDecimalRatio } from "../helpers/feeCut";
 import { tokenAmountToDecimal } from "../helpers/token";
@@ -25,6 +26,7 @@ import { IndexerVesting } from "./indexerVesting";
 // A class to manage Indexer
 export class Indexer {
   indexerEntity: IndexerEntity;
+  indexerEntityCached: IndexerEntity;
   currentBlock: ethereum.Block;
   _snapshot: IndexerSnapshot | null;
   _delegatedStake: BigDecimal;
@@ -33,6 +35,24 @@ export class Indexer {
 
   // Initialize an Indexer using its address
   constructor(address: Address, currentBlock: ethereum.Block) {
+    this.indexerEntityCached = this.getIndexer(
+      address,
+      currentBlock
+    ) as IndexerEntity;
+
+    this.indexerEntity = this.getIndexer(
+      address,
+      currentBlock
+    ) as IndexerEntity;
+
+    this.currentBlock = currentBlock;
+    this._snapshot = null;
+    this._delegatedStake = this.indexerEntity.delegatedStake as BigDecimal;
+    this._ownStake = this.indexerEntity.ownStake as BigDecimal;
+    this._allocatedStake = this.indexerEntity.allocatedStake as BigDecimal;
+  }
+
+  getIndexer(address: Address, currentBlock: ethereum.Block): IndexerEntity {
     let indexerEntity = IndexerEntity.load(address.toHex());
     if (indexerEntity == null) {
       indexerEntity = new IndexerEntity(address.toHex());
@@ -53,12 +73,8 @@ export class Indexer {
         indexerEntity.vesting = vestingDetails.indexerVestingEntity.id;
       }
     }
-    this.indexerEntity = indexerEntity as IndexerEntity;
-    this.currentBlock = currentBlock;
-    this._snapshot = null;
-    this._delegatedStake = indexerEntity.delegatedStake as BigDecimal;
-    this._ownStake = indexerEntity.ownStake as BigDecimal;
-    this._allocatedStake = indexerEntity.allocatedStake as BigDecimal;
+
+    return indexerEntity as IndexerEntity;
   }
 
   //=============== Getters and Setters ===============//
@@ -329,5 +345,13 @@ export class Indexer {
 
     // Save the indexer entity
     this.indexerEntity.save();
+  }
+
+  awardBadges(): void {
+    awardItsOnlyWaferThinBadge(
+      this.indexerEntityCached,
+      this.indexerEntity,
+      this.currentBlock
+    );
   }
 }
