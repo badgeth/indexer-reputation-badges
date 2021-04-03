@@ -35,21 +35,17 @@ export class Indexer {
 
   // Initialize an Indexer using its address
   constructor(address: Address, currentBlock: ethereum.Block) {
-    this.indexerEntityCached = this.getIndexer(
-      address,
-      currentBlock
-    ) as IndexerEntity;
+    // Cache the indexer's data before we perform operations on it
+    let indexerEntityCached = this.getIndexer(address, currentBlock);
+    this.indexerEntityCached = indexerEntityCached as IndexerEntity;
 
-    this.indexerEntity = this.getIndexer(
-      address,
-      currentBlock
-    ) as IndexerEntity;
-
+    let indexerEntity = this.getIndexer(address, currentBlock);
+    this.indexerEntity = indexerEntity as IndexerEntity;
     this.currentBlock = currentBlock;
     this._snapshot = null;
-    this._delegatedStake = this.indexerEntity.delegatedStake as BigDecimal;
-    this._ownStake = this.indexerEntity.ownStake as BigDecimal;
-    this._allocatedStake = this.indexerEntity.allocatedStake as BigDecimal;
+    this._delegatedStake = indexerEntity.delegatedStake as BigDecimal;
+    this._ownStake = indexerEntity.ownStake as BigDecimal;
+    this._allocatedStake = indexerEntity.allocatedStake as BigDecimal;
   }
 
   getIndexer(address: Address, currentBlock: ethereum.Block): IndexerEntity {
@@ -73,7 +69,6 @@ export class Indexer {
         indexerEntity.vesting = vestingDetails.indexerVestingEntity.id;
       }
     }
-
     return indexerEntity as IndexerEntity;
   }
 
