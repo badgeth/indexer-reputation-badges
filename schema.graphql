@@ -1,4 +1,38 @@
 """
+BadgeStats - tracks all badges and counts - singleton Entity
+"""
+type BadgeStats @entity {
+  "Singleton, id always equal to 'badgeStats'"
+  id: ID!
+
+  "Tracks the counts of ItsOnlyWaferThinBadge"
+  itsOnlyWaferThinBadgeCount: Int!
+
+  "Unix Timestamp when any badge was last awarded"
+  lastAwardedTimestamp: BigInt!
+
+  "Ethereum block when any badge was last awarded"
+  lastAwardedBlock: BigInt!
+}
+
+"""
+Awarded to indexers who become over-delegated
+"""
+type ItsOnlyWaferThinBadge @entity {
+  "Indexer address"
+  id: ID!
+
+  "Unix Timestamp when this indexer was awarded this badge"
+  awardedAtTimestamp: BigInt!
+
+  "Ethereum block when this indexer was awarded this badge"
+  awardedAtBlock: BigInt!
+
+  "Increments each time badge is awarded"
+  badgeNumber: Int!
+}
+
+"""
 Indexer details
 """
 type Indexer @entity {
@@ -139,20 +173,6 @@ type IndexerSnapshot @entity {
 
   "Count the number of parameters change"
   parametersChangeCount: Int!
-}
-
-"""
-Awarded to indexers who become over-delegated
-"""
-type ItsOnlyWaferThinBadge @entity {
-  "Indexer address"
-  id: ID!
-
-  "Unix Timestamp when this indexer was awarded this badge"
-  awardedAtTimestamp: BigInt!
-
-  "Ethereum block when this indexer was awarded this badge"
-  awardedAtBlock: BigInt!
 }
 
 """

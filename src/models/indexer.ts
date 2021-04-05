@@ -36,10 +36,10 @@ export class Indexer {
   // Initialize an Indexer using its address
   constructor(address: Address, currentBlock: ethereum.Block) {
     // Cache the indexer's data before we perform operations on it
-    let indexerEntityCached = this.getIndexer(address, currentBlock);
+    let indexerEntityCached = this._initializeIndexer(address, currentBlock);
     this.indexerEntityCached = indexerEntityCached as IndexerEntity;
 
-    let indexerEntity = this.getIndexer(address, currentBlock);
+    let indexerEntity = this._initializeIndexer(address, currentBlock);
     this.indexerEntity = indexerEntity as IndexerEntity;
     this.currentBlock = currentBlock;
     this._snapshot = null;
@@ -48,7 +48,10 @@ export class Indexer {
     this._allocatedStake = indexerEntity.allocatedStake as BigDecimal;
   }
 
-  getIndexer(address: Address, currentBlock: ethereum.Block): IndexerEntity {
+  _initializeIndexer(
+    address: Address,
+    currentBlock: ethereum.Block
+  ): IndexerEntity {
     let indexerEntity = IndexerEntity.load(address.toHex());
     if (indexerEntity == null) {
       indexerEntity = new IndexerEntity(address.toHex());
