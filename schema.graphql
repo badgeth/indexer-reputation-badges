@@ -1,12 +1,12 @@
 """
 BadgeStats - tracks all badges and counts - singleton Entity
 """
-type BadgeStats @entity {
-  "Singleton, id always equal to 'badgeStats'"
+type BadgeOverview @entity {
+  "Singleton, id always equal to 'BadgeOverview'"
   id: ID!
 
   "Tracks the counts of ItsOnlyWaferThinBadge"
-  itsOnlyWaferThinBadgeCount: Int!
+  itsOnlyWaferThinBadgeCount: BigInt!
 
   "Unix Timestamp when any badge was last awarded"
   lastAwardedTimestamp: BigInt!
@@ -29,7 +29,7 @@ type ItsOnlyWaferThinBadge @entity {
   awardedAtBlock: BigInt!
 
   "Increments each time badge is awarded"
-  badgeNumber: Int!
+  badgeNumber: BigInt!
 }
 
 """

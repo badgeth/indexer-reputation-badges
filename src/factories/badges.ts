@@ -1,19 +1,22 @@
 import { ethereum } from "@graphprotocol/graph-ts";
 import {
-  BadgeStats,
+  BadgeOverview,
   Indexer,
   ItsOnlyWaferThinBadge,
 } from "../../generated/schema";
-import { badgeStatsId } from "../helpers/constants";
+import { badgeOverviewId, oneBI, zeroBI } from "../helpers/constants";
 
-export function initializeBadgeStats(block: ethereum.Block): BadgeStats {
-  let badgeStats = BadgeStats.load(badgeStatsId());
-  if (badgeStats == null) {
-    badgeStats.itsOnlyWaferThinBadgeCount = 0;
-    badgeStats.lastAwardedTimestamp = block.timestamp;
-    badgeStats.lastAwardedBlock = block.number;
+export function initializeBadgeOverview(block: ethereum.Block): BadgeOverview {
+  let badgeOverview = BadgeOverview.load(badgeOverviewId());
+  if (badgeOverview == null) {
+    badgeOverview = new BadgeOverview(badgeOverviewId());
+    badgeOverview.itsOnlyWaferThinBadgeCount = zeroBI();
+    badgeOverview.lastAwardedTimestamp = block.timestamp;
+    badgeOverview.lastAwardedBlock = block.number;
+
+    badgeOverview.save();
   }
-  return badgeStats as BadgeStats;
+  return badgeOverview as BadgeOverview;
 }
 
 export function awardItsOnlyWaferThinBadge(
@@ -25,16 +28,20 @@ export function awardItsOnlyWaferThinBadge(
     !cachedIndexer.isOverDelegated && updatedIndexer.isOverDelegated;
 
   if (becomesOverDelegated) {
-    let badgeStats = initializeBadgeStats(block);
+    let badgeOverview = initializeBadgeOverview(block);
 
     let badge = new ItsOnlyWaferThinBadge(
       updatedIndexer.id.concat("-").concat(block.number.toString())
     );
 
-    let itsOnlyWaferThinBadgeCount = badgeStats.itsOnlyWaferThinBadgeCount + 1;
+    let itsOnlyWaferThinBadgeCount = badgeOverview.itsOnlyWaferThinBadgeCount.plus(
+      oneBI()
+    );
 
-    badgeStats.itsOnlyWaferThinBadgeCount = itsOnlyWaferThinBadgeCount;
-    badgeStats.save();
+    badgeOverview.lastAwardedTimestamp = block.timestamp;
+    badgeOverview.lastAwardedBlock = block.number;
+    badgeOverview.itsOnlyWaferThinBadgeCount = itsOnlyWaferThinBadgeCount;
+    badgeOverview.save();
 
     badge.awardedAtBlock = block.number;
     badge.awardedAtTimestamp = block.timestamp;

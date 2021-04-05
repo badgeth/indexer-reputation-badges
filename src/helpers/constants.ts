@@ -1,7 +1,7 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
-export function badgeStatsId(): string {
-  return "BadgeStats"; // Singleton ID for BadgeStats entity
+export function badgeOverviewId(): string {
+  return "BadgeOverview"; // Singleton ID for BadgeStats entity
 }
 
 export function zeroBD(): BigDecimal {
