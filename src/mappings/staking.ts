@@ -17,7 +17,6 @@ import {
   StakeSlashed,
   StakeWithdrawn,
 } from "../../generated/Staking/Staking";
-import { Delegator } from "../models/delegator";
 import { Indexer } from "../models/indexer";
 
 /**
@@ -98,9 +97,7 @@ export function handleStakeSlashed(event: StakeSlashed): void {
  *   uint256 shares
  */
 export function handleStakeDelegated(event: StakeDelegated): void {
-  let delegator = new Delegator(event.params.indexer, event.block);
   let indexer = new Indexer(event.params.indexer, event.block);
-  // delegator.handleStakeDelegated(event);
   indexer.handleStakeDelegated(event);
   indexer.awardBadges();
 }

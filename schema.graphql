@@ -133,22 +133,8 @@ type IndexerMonthlyMetric @entity {
   "Indexer entity"
   indexer: Indexer!
 
-  "Number of delegators who staked to this indexer for the year"
-  delegatorsStaked: BigDecimal!
-}
-
-"""
-An instance of a delegator staking to an indexer
-"""
-type StakeDelegation @entity {
-  "Ethereum address of the Indexer + Delegator"
-  id: ID!
-
-  "Index the stake is delegated to"
-  indexer: Indexer!
-
-  "Delegator"
-  delegator: Delegator!
+  "Number of delegators who staked to this indexer"
+  newDelegatorCount: BigInt!
 }
 
 """
@@ -243,20 +229,22 @@ type DelegatedStake @entity {
   indexer: Indexer!
   "Delegator"
   delegator: Delegator!
-  "CUMULATIVE tokens delegated"
-  stakedTokens: BigInt!
-  "CUMULATIVE tokens undelegated"
-  unstakedTokens: BigInt!
-  "CURRENT tokens locked"
-  lockedTokens: BigInt!
-  "Epoch the locked tokens get unlocked"
-  lockedUntil: Int!
-  "Shares owned in the delegator pool. Used to calculate total amount delegated"
-  shareAmount: BigInt!
-  "The rate this delegator paid for their shares (calculated using average cost basis). Used for rewards calculations"
-  personalExchangeRate: BigDecimal!
-  "Realized rewards from undelegating and realizing a reward"
-  realizedRewards: BigDecimal!
-  "Time this delegator first delegated to an indexer"
-  createdAt: Int!
+  "Time created at"
+  createdAtTimestamp: BigInt!
+  # "CUMULATIVE tokens delegated"
+  # stakedTokens: BigInt!
+  # "CUMULATIVE tokens undelegated"
+  # unstakedTokens: BigInt!
+  # "CURRENT tokens locked"
+  # lockedTokens: BigInt!
+  # "Epoch the locked tokens get unlocked"
+  # lockedUntil: Int!
+  # "Shares owned in the delegator pool. Used to calculate total amount delegated"
+  # shareAmount: BigInt!
+  # "The rate this delegator paid for their shares (calculated using average cost basis). Used for rewards calculations"
+  # personalExchangeRate: BigDecimal!
+  # "Realized rewards from undelegating and realizing a reward"
+  # realizedRewards: BigDecimal!
+  # "Time this delegator first delegated to an indexer"
+  # createdAt: Int!
 }

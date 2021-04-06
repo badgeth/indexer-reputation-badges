@@ -22,6 +22,7 @@ import {
 import { oneBI, sixteenBD, zeroBD, zeroBI } from "../helpers/constants";
 import { feeCutToDecimalRatio } from "../helpers/feeCut";
 import { tokenAmountToDecimal } from "../helpers/token";
+import { IndexerMonthlyMetric } from "./indexerMonthlyMetric";
 import { IndexerParameterUpdate } from "./indexerParameterUpdate";
 import { IndexerSnapshot } from "./indexerSnapshot";
 import { IndexerVesting } from "./indexerVesting";
@@ -32,6 +33,7 @@ export class Indexer {
   indexerEntityCached: IndexerEntity;
   currentBlock: ethereum.Block;
   _snapshot: IndexerSnapshot | null;
+  _monthlyMetric: IndexerMonthlyMetric | null;
   _delegatedStake: BigDecimal;
   _ownStake: BigDecimal;
   _allocatedStake: BigDecimal;
@@ -46,6 +48,7 @@ export class Indexer {
     this.indexerEntity = indexerEntity as IndexerEntity;
     this.currentBlock = currentBlock;
     this._snapshot = null;
+    this._monthlyMetric = null;
     this._delegatedStake = indexerEntity.delegatedStake as BigDecimal;
     this._ownStake = indexerEntity.ownStake as BigDecimal;
     this._allocatedStake = indexerEntity.allocatedStake as BigDecimal;
@@ -153,6 +156,16 @@ export class Indexer {
     return this._snapshot as IndexerSnapshot;
   }
 
+  get monthlyMetric(): IndexerMonthlyMetric {
+    if (this._monthlyMetric == null) {
+      this._monthlyMetric = new IndexerMonthlyMetric(
+        this.indexerEntity,
+        this.currentBlock
+      );
+    }
+    return this._monthlyMetric as IndexerMonthlyMetric;
+  }
+
   // Determine the monthly reward rate for delegator
   get lastMonthDelegatorRewardRate(): BigDecimal {
     if (this.delegatedStake.equals(zeroBD())) {
@@ -239,7 +252,9 @@ export class Indexer {
   handleStakeDelegated(event: StakeDelegated): void {
     let indexerStakeDelegated = tokenAmountToDecimal(event.params.tokens);
     let mintedShares = event.params.shares;
+    let delegatorAddress = event.params.delegator;
     this.updateDelegatedStake(indexerStakeDelegated, mintedShares);
+    this.monthlyMetric.addNewDelegatorCount(delegatorAddress);
   }
 
   // Handles a delegated stake lock
