@@ -5,20 +5,32 @@ type BadgeOverview @entity {
   "Singleton, id always equal to 'BadgeOverview'"
   id: ID!
 
-  "Tracks the counts of ItsOnlyWaferThinBadge"
+  "Tracks badge counts"
   itsOnlyWaferThinBadgeCount: BigInt!
-
-  "Unix Timestamp when any badge was last awarded"
-  lastAwardedTimestamp: BigInt!
-
-  "Ethereum block when any badge was last awarded"
-  lastAwardedBlock: BigInt!
+  anIndexerIsBornBadgeCount: BigInt!
 }
 
 """
 Awarded to indexers who become over-delegated
 """
 type ItsOnlyWaferThinBadge @entity {
+  "Indexer address"
+  id: ID!
+
+  "Unix Timestamp when this indexer was awarded this badge"
+  awardedAtTimestamp: BigInt!
+
+  "Ethereum block when this indexer was awarded this badge"
+  awardedAtBlock: BigInt!
+
+  "Increments each time badge is awarded"
+  badgeNumber: BigInt!
+}
+
+"""
+Awarded to newly created indexers
+"""
+type AnIndexerIsBornBadge @entity {
   "Indexer address"
   id: ID!
 
@@ -112,6 +124,34 @@ type IndexerVesting @entity {
 }
 
 """
+Indexer Monthly KPIs
+"""
+type IndexerMonthlyMetric @entity {
+  "Ethereum address of the Indexer + month + year"
+  id: ID!
+
+  "Indexer entity"
+  indexer: Indexer!
+
+  "Number of delegators who staked to this indexer for the year"
+  delegatorsStaked: BigDecimal!
+}
+
+"""
+An instance of a delegator staking to an indexer
+"""
+type StakeDelegation @entity {
+  "Ethereum address of the Indexer + Delegator"
+  id: ID!
+
+  "Index the stake is delegated to"
+  indexer: Indexer!
+
+  "Delegator"
+  delegator: Delegator!
+}
+
+"""
 Indexer update of parameters
 """
 type IndexerParameterUpdate @entity {
@@ -181,16 +221,16 @@ Delegator with all their delegated stakes towards Indexers
 type Delegator @entity {
   "Delegator address"
   id: ID!
-  "Stakes of this delegator"
-  stakes: [DelegatedStake!]! @derivedFrom(field: "delegator")
-  "CUMULATIVE staked tokens in DelegatorStakes of this Delegator"
-  totalStakedTokens: BigInt!
-  "CUMULATIVE unstaked tokens in DelegatorStakes of this Delegator"
-  totalUnstakedTokens: BigInt!
+  # "Stakes of this delegator"
+  # stakes: [DelegatedStake!]! @derivedFrom(field: "delegator")
+  # "CUMULATIVE staked tokens in DelegatorStakes of this Delegator"
+  # totalStakedTokens: BigInt!
+  # "CUMULATIVE unstaked tokens in DelegatorStakes of this Delegator"
+  # totalUnstakedTokens: BigInt!
   "Time created at"
-  createdAt: Int!
-  "Total realized rewards on all delegated stakes. Realized rewards are added when undelegating and realizing a profit"
-  totalRealizedRewards: BigDecimal!
+  createdAtTimestamp: BigInt!
+  # "Total realized rewards on all delegated stakes. Realized rewards are added when undelegating and realizing a profit"
+  # totalRealizedRewards: BigDecimal!
 }
 
 """

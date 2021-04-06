@@ -3,7 +3,6 @@
  * https://github.com/graphprotocol/contracts/blob/master/contracts/staking/Staking.sol
  */
 
-import { log } from "@graphprotocol/graph-ts";
 import {
   AllocationClosed,
   AllocationCollected,
@@ -18,7 +17,7 @@ import {
   StakeSlashed,
   StakeWithdrawn,
 } from "../../generated/Staking/Staking";
-import { dayMonthYearFromEventTimestamp } from "../helpers/dayMonthYear";
+import { Delegator } from "../models/delegator";
 import { Indexer } from "../models/indexer";
 
 /**
@@ -45,10 +44,6 @@ export function handleDelegationParametersUpdated(
  */
 export function handleStakeDeposited(event: StakeDeposited): void {
   let indexer = new Indexer(event.params.indexer, event.block);
-  log.info("Time = {}", [
-    dayMonthYearFromEventTimestamp(event).month.toString(),
-  ]);
-
   indexer.handleStakeDeposited(event);
   indexer.awardBadges();
 }
@@ -103,7 +98,9 @@ export function handleStakeSlashed(event: StakeSlashed): void {
  *   uint256 shares
  */
 export function handleStakeDelegated(event: StakeDelegated): void {
+  let delegator = new Delegator(event.params.indexer, event.block);
   let indexer = new Indexer(event.params.indexer, event.block);
+  // delegator.handleStakeDelegated(event);
   indexer.handleStakeDelegated(event);
   indexer.awardBadges();
 }
