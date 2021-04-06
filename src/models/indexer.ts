@@ -15,7 +15,10 @@ import {
   StakeSlashed,
   StakeWithdrawn,
 } from "../../generated/Staking/Staking";
-import { awardItsOnlyWaferThinBadge } from "../factories/badges";
+import {
+  awardAnIndexerIsBornBadge,
+  awardItsOnlyWaferThinBadge,
+} from "../factories/badges";
 import { oneBI, sixteenBD, zeroBD, zeroBI } from "../helpers/constants";
 import { feeCutToDecimalRatio } from "../helpers/feeCut";
 import { tokenAmountToDecimal } from "../helpers/token";
@@ -351,5 +354,6 @@ export class Indexer {
       this.indexerEntity,
       this.currentBlock
     );
+    awardAnIndexerIsBornBadge(this.indexerEntity, this.currentBlock);
   }
 }
