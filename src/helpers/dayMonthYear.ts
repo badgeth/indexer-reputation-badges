@@ -16,9 +16,9 @@ class DayMonthYear {
 
 // Ported from http://howardhinnant.github.io/date_algorithms.html#civil_from_days
 export function dayMonthYearFromEventTimestamp(
-  event: ethereum.Event
+  block: ethereum.Block
 ): DayMonthYear {
-  let unixEpoch: BigInt = event.block.timestamp;
+  let unixEpoch: BigInt = block.timestamp;
 
   // you can have leap seconds apparently - but this is good enough for us ;)
   let daysSinceEpochStart = unixEpoch / oneDay();
