@@ -20,7 +20,8 @@ export class DelegatedStake {
     this.currentBlock = currentBlock;
     this.indexerEntity = indexerEntity;
     this.delegatorEntity = delegatorEntity;
-    this.delegatedStakeEntity = this._initializeDelegatedStakeEntity();
+    let delegatedStakeEntity = this._initializeDelegatedStakeEntity();
+    this.delegatedStakeEntity = delegatedStakeEntity;
   }
 
   _initializeDelegatedStakeEntity(): DelegatedStakeEntity {
