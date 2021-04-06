@@ -49,12 +49,12 @@ export class IndexerMonthlyMetric {
 
   //-- SETTERS --//
   addNewDelegatorCount(delegatorAddress: Address): void {
-    log.info("add NEW DELEGATOR COUNT", []);
-    log.info("delegator address {}", [delegatorAddress.toString()]);
-    log.info("current block {}", [this.currentBlock.timestamp.toString()]);
+    log.error("add NEW DELEGATOR COUNT", []);
+    log.error("delegator address {}", [delegatorAddress.toString()]);
+    log.error("current block {}", [this.currentBlock.timestamp.toString()]);
     let delegator = new Delegator(delegatorAddress, this.currentBlock);
-    log.info("first time: this.delegatorEntity.id {}", [
-      delegator.delegatorEntity.id.toString(),
+    log.error("first time: this.delegatorEntity.id {}", [
+      delegator.delegatorEntity.createdAtTimestamp.toString(),
     ]);
     let delegatedStake = new DelegatedStake(
       this.indexerEntity,
