@@ -1,4 +1,4 @@
-import { Address, ethereum, log } from "@graphprotocol/graph-ts";
+import { Address, ethereum } from "@graphprotocol/graph-ts";
 import { Delegator as DelegatorEntity } from "../../generated/schema";
 
 // A class to manage Indexer Snapshot
@@ -10,7 +10,6 @@ export class Delegator {
   constructor(address: Address, currentBlock: ethereum.Block) {
     let delegatorEntity = this._initializeDelegator(address, currentBlock);
     this.delegatorEntity = delegatorEntity;
-    log.error("DELEGATORENTITY IS {}", [delegatorEntity.id.toString()]);
   }
 
   _initializeDelegator(

@@ -1,4 +1,4 @@
-import { ethereum, log } from "@graphprotocol/graph-ts";
+import { ethereum } from "@graphprotocol/graph-ts";
 import {
   DelegatedStake as DelegatedStakeEntity,
   Delegator as DelegatorEntity,
@@ -38,11 +38,6 @@ export class DelegatedStake {
 
   //--- GETTERS ---//
   get id(): string {
-    log.info("WACKY!!!!!!!!!!!!!!!!!!!!!!!!!1", []);
-    log.info("this.indexerEntity.id {}", [this.indexerEntity.id.toString()]);
-    log.info("this.delegatorEntity.id {}", [
-      this.delegatorEntity.id.toString(),
-    ]);
     return this.indexerEntity.id
       .toString()
       .concat("-")

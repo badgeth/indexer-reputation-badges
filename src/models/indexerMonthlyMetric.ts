@@ -1,4 +1,4 @@
-import { Address, ethereum, log } from "@graphprotocol/graph-ts";
+import { Address, ethereum } from "@graphprotocol/graph-ts";
 import {
   Indexer as IndexerEntity,
   IndexerMonthlyMetric as IndexerMonthlyMetricEntity,
@@ -49,13 +49,7 @@ export class IndexerMonthlyMetric {
 
   //-- SETTERS --//
   addNewDelegatorCount(delegatorAddress: Address): void {
-    log.error("add NEW DELEGATOR COUNT", []);
-    log.error("delegator address {}", [delegatorAddress.toString()]);
-    log.error("current block {}", [this.currentBlock.timestamp.toString()]);
     let delegator = new Delegator(delegatorAddress, this.currentBlock);
-    log.error("first time: this.delegatorEntity.id {}", [
-      delegator.delegatorEntity.createdAtTimestamp.toString(),
-    ]);
     let delegatedStake = new DelegatedStake(
       this.indexerEntity,
       delegator.delegatorEntity,
