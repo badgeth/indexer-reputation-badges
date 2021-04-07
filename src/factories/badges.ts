@@ -1,6 +1,8 @@
 import { ethereum } from "@graphprotocol/graph-ts";
 import {
   AnIndexerIsBornBadge,
+  BadgeAward,
+  BadgeDefinition,
   BadgeOverview,
   Indexer,
   ItsOnlyWaferThinBadge,
@@ -11,6 +13,7 @@ export function initializeBadgeOverview(block: ethereum.Block): BadgeOverview {
   let badgeOverview = BadgeOverview.load(badgeOverviewId());
   if (badgeOverview == null) {
     badgeOverview = new BadgeOverview(badgeOverviewId());
+    badgeOverview.badgeDefinitionCount = 1;
     badgeOverview.itsOnlyWaferThinBadgeCount = zeroBI();
     badgeOverview.anIndexerIsBornBadgeCount = zeroBI();
     badgeOverview.save();
@@ -70,27 +73,24 @@ export function awardAnIndexerIsBornBadge(
   }
 }
 
-export function awardMonthlyDelegatorHoneypot(
-  updatedIndexer: Indexer,
-  block: ethereum.Block
+export function awardBadge(
+  address: string,
+  block: ethereum.Block,
+  badgeDefinition: BadgeDefinition
 ): void {
-  let indexerIsCreated = updatedIndexer.createdAtTimestamp == block.timestamp;
+  let id = address
+    .concat("-")
+    .concat(block.number.toString())
+    .concat("-")
+    .concat(badgeDefinition.name);
+  let badge = new BadgeAward(id);
 
-  if (indexerIsCreated) {
-    let badgeOverview = initializeBadgeOverview(block);
+  let badgeCount = badgeDefinition.badgeCount + 1;
+  badgeDefinition.badgeCount = badgeCount;
+  badgeDefinition.save();
 
-    let badge = new AnIndexerIsBornBadge(
-      updatedIndexer.id.concat("-").concat(block.number.toString())
-    );
-
-    let badgeCount = badgeOverview.anIndexerIsBornBadgeCount.plus(oneBI());
-
-    badgeOverview.anIndexerIsBornBadgeCount = badgeCount;
-    badgeOverview.save();
-
-    badge.awardedAtBlock = block.number;
-    badge.awardedAtTimestamp = block.timestamp;
-    badge.badgeNumber = badgeCount;
-    badge.save();
-  }
+  badge.awardedAtBlock = block.number;
+  badge.awardedAtTimestamp = block.timestamp;
+  badge.badgeNumber = badgeCount;
+  badge.save();
 }

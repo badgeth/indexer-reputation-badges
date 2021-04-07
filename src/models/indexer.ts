@@ -1,4 +1,10 @@
-import { Address, BigDecimal, BigInt, ethereum } from "@graphprotocol/graph-ts";
+import {
+  Address,
+  BigDecimal,
+  BigInt,
+  ethereum,
+  log,
+} from "@graphprotocol/graph-ts";
 import { RewardsAssigned } from "../../generated/RewardsManager/RewardsManager";
 import { Indexer as IndexerEntity } from "../../generated/schema";
 import {
@@ -15,13 +21,11 @@ import {
   StakeSlashed,
   StakeWithdrawn,
 } from "../../generated/Staking/Staking";
-import {
-  awardAnIndexerIsBornBadge,
-  awardItsOnlyWaferThinBadge,
-} from "../factories/badges";
+import { awardBadge, initializeBadgeOverview } from "../factories/badges";
 import { oneBI, sixteenBD, zeroBD, zeroBI } from "../helpers/constants";
 import { feeCutToDecimalRatio } from "../helpers/feeCut";
 import { tokenAmountToDecimal } from "../helpers/token";
+import { BadgeDefinition } from "./badgeDefinition";
 import { IndexerMonthlyMetric } from "./indexerMonthlyMetric";
 import { IndexerParameterUpdate } from "./indexerParameterUpdate";
 import { IndexerSnapshot } from "./indexerSnapshot";
@@ -364,11 +368,56 @@ export class Indexer {
   }
 
   awardBadges(): void {
-    awardItsOnlyWaferThinBadge(
-      this.indexerEntityCached,
-      this.indexerEntity,
-      this.currentBlock
-    );
-    awardAnIndexerIsBornBadge(this.indexerEntity, this.currentBlock);
+    let badgeOverview = initializeBadgeOverview(this.currentBlock);
+    for (let i = 0; i < badgeOverview.badgeDefinitionCount; i++) {
+      let badgeDefinitionClass = new BadgeDefinition(i, this.currentBlock);
+      let badgeDefinition = badgeDefinitionClass.badgeDefinitionEntity;
+
+      let isIndexerBadgeDefinition = badgeDefinition.entity == "Indexer";
+
+      let property = badgeDefinition.property;
+
+      log.error("WTF~~~~~~~~~~~~~~~~", []);
+      log.error("this.indexerEntityCached.get(property).toString() {}", [
+        stringify(this.indexerEntityCached.get(property)),
+      ]);
+
+      let preAwardMatches =
+        (stringify(this.indexerEntityCached.get(property)) as string) ==
+        badgeDefinition.preAwardValue;
+      let postAwardMatches =
+        (stringify(this.indexerEntityCached.get(property)) as string) ==
+        badgeDefinition.postAwardValue;
+
+      if (isIndexerBadgeDefinition && !!preAwardMatches && !!postAwardMatches) {
+        awardBadge(this.indexerEntity.id, this.currentBlock, badgeDefinition);
+      }
+    }
   }
 }
+
+function stringify<T>(a: T): string {
+  if (isInteger<T>() || isFloat<T>()) {
+    return a.toString();
+  } else if (isString<T>()) {
+    return a;
+  } else if (a === null) {
+    return "null";
+  } else {
+    return a ? "true" : "false";
+  }
+}
+
+// function stringify(val: Value | boolean): string {
+//   if (val === true) {
+//     return "true";
+//   } else if (val === false) {
+//     return "false";
+//   } else if (val === null) {
+//     return "null";
+//   } else if (val === undefined) {
+//     return "undefined";
+//   } else {
+//     return val.toString();
+//   }
+// }

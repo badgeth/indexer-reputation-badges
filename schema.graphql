@@ -5,9 +5,61 @@ type BadgeOverview @entity {
   "Singleton, id always equal to 'BadgeOverview'"
   id: ID!
 
+  "Manually manage list of badge definition ids for iteration"
+  badgeDefinitionCount: Int!
+
   "Tracks badge counts"
   itsOnlyWaferThinBadgeCount: BigInt!
   anIndexerIsBornBadgeCount: BigInt!
+}
+
+"""
+BadgeDefinition - read from the Badgeth BadgeDefinition smart contract
+"""
+type BadgeDefinition @entity {
+  "Incremented id"
+  id: ID!
+
+  "Optional name field"
+  name: String
+
+  "Unix Timestamp"
+  createdAtTimestamp: BigInt!
+
+  "Entity name - e.g. Indexer"
+  entity: String!
+
+  "Entity property - e.g. isOverDelegated"
+  property: String!
+
+  "Value before becoming an award"
+  preAwardValue: String!
+
+  "Value to trigger issuing award"
+  postAwardValue: String!
+
+  "Increments with each award"
+  badgeCount: Int!
+}
+
+"""
+Awarded to indexers who become over-delegated
+"""
+type BadgeAward @entity {
+  "Indexer address"
+  id: ID!
+
+  "Badge Name"
+  name: String!
+
+  "Unix Timestamp when this indexer was awarded this badge"
+  awardedAtTimestamp: BigInt!
+
+  "Ethereum block when this indexer was awarded this badge"
+  awardedAtBlock: BigInt!
+
+  "Increments each time badge is awarded"
+  badgeNumber: Int!
 }
 
 """

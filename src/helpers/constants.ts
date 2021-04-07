@@ -1,5 +1,9 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 
+export function subgraphName(): string {
+  return "TheGraphBadges";
+}
+
 export function badgeOverviewId(): string {
   return "BadgeOverview"; // Singleton ID for BadgeStats entity
 }
