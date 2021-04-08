@@ -21,11 +21,9 @@ import {
   StakeSlashed,
   StakeWithdrawn,
 } from "../../generated/Staking/Staking";
-import { awardBadge, initializeBadgeOverview } from "../factories/badges";
 import { oneBI, sixteenBD, zeroBD, zeroBI } from "../helpers/constants";
 import { feeCutToDecimalRatio } from "../helpers/feeCut";
 import { tokenAmountToDecimal } from "../helpers/token";
-import { BadgeDefinition } from "./badgeDefinition";
 import { IndexerMonthlyMetric } from "./indexerMonthlyMetric";
 import { IndexerParameterUpdate } from "./indexerParameterUpdate";
 import { IndexerSnapshot } from "./indexerSnapshot";
@@ -41,6 +39,15 @@ export class Indexer {
   _delegatedStake: BigDecimal;
   _ownStake: BigDecimal;
   _allocatedStake: BigDecimal;
+
+  @operator("[]")
+  get(key: string): string {
+    if (key == "isOverDelegated") {
+      return stringify(this.isOverDelegated);
+    } else {
+      throw new Error("invalid key");
+    }
+  }
 
   // Initialize an Indexer using its address
   constructor(address: Address, currentBlock: ethereum.Block) {
@@ -366,58 +373,27 @@ export class Indexer {
     // Save the indexer entity
     this.indexerEntity.save();
   }
-
-  awardBadges(): void {
-    let badgeOverview = initializeBadgeOverview(this.currentBlock);
-    for (let i = 0; i < badgeOverview.badgeDefinitionCount; i++) {
-      let badgeDefinitionClass = new BadgeDefinition(i, this.currentBlock);
-      let badgeDefinition = badgeDefinitionClass.badgeDefinitionEntity;
-
-      let isIndexerBadgeDefinition = badgeDefinition.entity == "Indexer";
-
-      let property = badgeDefinition.property;
-
-      log.error("WTF~~~~~~~~~~~~~~~~", []);
-      log.error("this.indexerEntityCached.get(property).toString() {}", [
-        stringify(this.indexerEntityCached.get(property)),
-      ]);
-
-      let preAwardMatches =
-        (stringify(this.indexerEntityCached.get(property)) as string) ==
-        badgeDefinition.preAwardValue;
-      let postAwardMatches =
-        (stringify(this.indexerEntityCached.get(property)) as string) ==
-        badgeDefinition.postAwardValue;
-
-      if (isIndexerBadgeDefinition && !!preAwardMatches && !!postAwardMatches) {
-        awardBadge(this.indexerEntity.id, this.currentBlock, badgeDefinition);
-      }
-    }
-  }
 }
 
-function stringify<T>(a: T): string {
-  if (isInteger<T>() || isFloat<T>()) {
+export function stringify<T>(a: T): string {
+  if (a instanceof bool) {
+    return a ? "true" : "false";
+  } else if (a === null) {
+    log.info("its null!!!", []);
+    return "null";
+  } else if (isInteger<T>() || isFloat<T>()) {
     return a.toString();
   } else if (isString<T>()) {
     return a;
-  } else if (a === null) {
-    return "null";
   } else {
-    return a ? "true" : "false";
+    return "Unknown";
   }
 }
 
-// function stringify(val: Value | boolean): string {
-//   if (val === true) {
-//     return "true";
-//   } else if (val === false) {
-//     return "false";
-//   } else if (val === null) {
-//     return "null";
-//   } else if (val === undefined) {
-//     return "undefined";
-//   } else {
-//     return val.toString();
-//   }
-// }
+log.info("~~~ false == false {}", [
+  "false" == "false" ? "they are actually false" : "what the fuck",
+]);
+
+log.info("~~~ false === false {}", [
+  "false" == "false" ? "they are actually false" : "what the fuck",
+]);

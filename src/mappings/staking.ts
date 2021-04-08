@@ -3,6 +3,7 @@
  * https://github.com/graphprotocol/contracts/blob/master/contracts/staking/Staking.sol
  */
 
+import { log } from "@graphprotocol/graph-ts";
 import {
   AllocationClosed,
   AllocationCollected,
@@ -17,7 +18,9 @@ import {
   StakeSlashed,
   StakeWithdrawn,
 } from "../../generated/Staking/Staking";
-import { Indexer } from "../models/indexer";
+import { awardBadge, initializeBadgeOverview } from "../factories/badges";
+import { BadgeDefinition } from "../models/badgeDefinition";
+import { Indexer, stringify } from "../models/indexer";
 
 /**
  * @dev Emitted when `indexer` update the delegation parameters for its delegation pool.
@@ -32,7 +35,6 @@ export function handleDelegationParametersUpdated(
 ): void {
   let indexer = new Indexer(event.params.indexer, event.block);
   indexer.handleDelegationParametersUpdated(event);
-  indexer.awardBadges();
 }
 
 /**
@@ -44,7 +46,6 @@ export function handleDelegationParametersUpdated(
 export function handleStakeDeposited(event: StakeDeposited): void {
   let indexer = new Indexer(event.params.indexer, event.block);
   indexer.handleStakeDeposited(event);
-  indexer.awardBadges();
 }
 
 /**
@@ -57,7 +58,6 @@ export function handleStakeDeposited(event: StakeDeposited): void {
 export function handleStakeLocked(event: StakeLocked): void {
   let indexer = new Indexer(event.params.indexer, event.block);
   indexer.handleStakeLocked(event);
-  indexer.awardBadges();
 }
 
 /**
@@ -69,7 +69,6 @@ export function handleStakeLocked(event: StakeLocked): void {
 export function handleStakeWithdrawn(event: StakeWithdrawn): void {
   let indexer = new Indexer(event.params.indexer, event.block);
   indexer.handleStakeWithdrawn(event);
-  indexer.awardBadges();
 }
 
 /**
@@ -84,7 +83,6 @@ export function handleStakeWithdrawn(event: StakeWithdrawn): void {
 export function handleStakeSlashed(event: StakeSlashed): void {
   let indexer = new Indexer(event.params.indexer, event.block);
   indexer.handleStakeSlashed(event);
-  indexer.awardBadges();
 }
 
 /**
@@ -99,7 +97,56 @@ export function handleStakeSlashed(event: StakeSlashed): void {
 export function handleStakeDelegated(event: StakeDelegated): void {
   let indexer = new Indexer(event.params.indexer, event.block);
   indexer.handleStakeDelegated(event);
-  indexer.awardBadges();
+  awardBadges(indexer, indexer);
+}
+
+export function awardBadges(entityCached: Indexer, entity: Indexer): void {
+  let badgeOverview = initializeBadgeOverview(entityCached.currentBlock);
+  for (let i = 0; i < badgeOverview.badgeDefinitionCount; i++) {
+    let badgeDefinitionClass = new BadgeDefinition(
+      i,
+      entityCached.currentBlock
+    );
+    let badgeDefinition = badgeDefinitionClass.badgeDefinitionEntity;
+
+    let isIndexerBadgeDefinition = badgeDefinition.entity == "Indexer";
+
+    let property = badgeDefinition.property;
+
+    let preAwardMatches =
+      stringify(entityCached[badgeDefinition.property]) ==
+      badgeDefinition.preAwardValue;
+
+    // if (property == "false") {
+    //   log.info("~~~ it's false!!!!!!!!!! {}", [entityCached.indexerEntity.id]);
+    // }
+    log.info("~~~ stringify(this[property])) {}", [entity[property]]);
+
+    throw new Error("bad bad not good");
+
+    log.info("~~~ this.indexerEntityCached.isOverDelegated) {}", [
+      stringify(entityCached.indexerEntityCached.isOverDelegated),
+    ]);
+
+    let postAwardMatches =
+      stringify(entityCached.indexerEntity.get(property)) ==
+      badgeDefinition.postAwardValue;
+
+    log.info("~~~ preAwardMatches {}", [preAwardMatches ? "true" : "false"]);
+
+    log.info("~~~ postAwardMatches {}", [postAwardMatches ? "true" : "false"]);
+
+    log.info("~~~ badgeDefinition {}", [badgeDefinition.preAwardValue]);
+    log.info("~~~ badgeDefinition {}", [badgeDefinition.postAwardValue]);
+
+    if (isIndexerBadgeDefinition && preAwardMatches && postAwardMatches) {
+      awardBadge(
+        entityCached.indexerEntity.id,
+        entityCached.currentBlock,
+        badgeDefinition
+      );
+    }
+  }
 }
 
 /**
@@ -115,7 +162,6 @@ export function handleStakeDelegated(event: StakeDelegated): void {
 export function handleStakeDelegatedLocked(event: StakeDelegatedLocked): void {
   let indexer = new Indexer(event.params.indexer, event.block);
   indexer.handleStakeDelegatedLocked(event);
-  indexer.awardBadges();
 }
 
 /**
@@ -130,7 +176,6 @@ export function handleStakeDelegatedWithdrawn(
 ): void {
   let indexer = new Indexer(event.params.indexer, event.block);
   indexer.handleStakeDelegatedWithdrawn(event);
-  indexer.awardBadges();
 }
 
 /**
@@ -149,7 +194,6 @@ export function handleStakeDelegatedWithdrawn(
 export function handleAllocationCreated(event: AllocationCreated): void {
   let indexer = new Indexer(event.params.indexer, event.block);
   indexer.handleAllocationCreated(event);
-  indexer.awardBadges();
 }
 
 /**
@@ -169,7 +213,6 @@ export function handleAllocationCreated(event: AllocationCreated): void {
 export function handleAllocationCollected(event: AllocationCollected): void {
   let indexer = new Indexer(event.params.indexer, event.block);
   indexer.handleAllocationCollected(event);
-  indexer.awardBadges();
 }
 
 /**
@@ -192,7 +235,6 @@ export function handleAllocationCollected(event: AllocationCollected): void {
 export function handleAllocationClosed(event: AllocationClosed): void {
   let indexer = new Indexer(event.params.indexer, event.block);
   indexer.handleAllocationClosed(event);
-  indexer.awardBadges();
 }
 
 /**
@@ -213,5 +255,4 @@ export function handleAllocationClosed(event: AllocationClosed): void {
 export function handleRebateClaimed(event: RebateClaimed): void {
   let indexer = new Indexer(event.params.indexer, event.block);
   indexer.handleRebateClaimed(event);
-  indexer.awardBadges();
 }
