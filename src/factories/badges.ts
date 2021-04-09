@@ -89,6 +89,7 @@ export function awardBadge(
   badgeDefinition.badgeCount = badgeCount;
   badgeDefinition.save();
 
+  badge.name = badgeDefinition.name;
   badge.awardedAtBlock = block.number;
   badge.awardedAtTimestamp = block.timestamp;
   badge.badgeNumber = badgeCount;

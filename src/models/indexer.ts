@@ -42,6 +42,7 @@ export class Indexer {
 
   @operator("[]")
   get(key: string): string {
+    // explore taking in
     if (key == "isOverDelegated") {
       return stringify(this.isOverDelegated);
     } else {

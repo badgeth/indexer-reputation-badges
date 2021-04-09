@@ -43,10 +43,10 @@ type BadgeDefinition @entity {
 }
 
 """
-Awarded to indexers who become over-delegated
+Badge Awards given to Ethereum addresses
 """
 type BadgeAward @entity {
-  "Indexer address"
+  "Ethereum address"
   id: ID!
 
   "Badge Name"
@@ -60,6 +60,12 @@ type BadgeAward @entity {
 
   "Increments each time badge is awarded"
   badgeNumber: Int!
+
+  "True if badge award has been put on chain"
+  awardedOnChain: Boolean!
+
+  "True if badge award has been minted as NFT"
+  mintedOnChain: Boolean!
 }
 
 """

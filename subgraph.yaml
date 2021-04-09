@@ -5,12 +5,32 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum/contract
-    name: Staking
-    network: mainnet
+    name: BadgeDefinitions
+    network: rinkeby
     source:
-      address: "0xF55041E37E12cD407ad00CE2910B8269B01263b9"
+      address: "0x351A05E0aC4d863Bdf8352986ABC0877A4606195"
+      abi: BadgeDefinition
+      startBlock: 9997420
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.4
+      language: wasm/assemblyscript
+      file: ./src/mappings/rewardsManager.ts
+      entities:
+        - BadgeDefinition
+      abis:
+        - name: BadgeDefinition
+          file: ./abis/BadgeDefinition.json
+      eventHandlers:
+        - event: BadgeDefinitionCreated(string,string,string,bool,bool)
+          handler: handleBadgeDefinitionCreated
+  - kind: ethereum/contract
+    name: Staking
+    network: rinkeby
+    source:
+      address: "0x2d44C0e097F6cD0f514edAC633d82E01280B4A5c"
       abi: Staking
-      startBlock: 11446786
+      startBlock: 7560000
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.4
@@ -50,24 +70,24 @@ dataSources:
           handler: handleAllocationClosed
         - event: RebateClaimed(indexed address,indexed bytes32,indexed address,uint256,uint256,uint256,uint256,uint256)
           handler: handleRebateClaimed
-  - kind: ethereum/contract
-    name: RewardsManager
-    network: mainnet
-    source:
-      address: "0x9Ac758AB77733b4150A901ebd659cbF8cB93ED66"
-      abi: RewardsManager
-      startBlock: 11446790
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.4
-      language: wasm/assemblyscript
-      file: ./src/mappings/rewardsManager.ts
-      entities:
-        - Indexer
-        - IndexerSnapshot
-      abis:
-        - name: RewardsManager
-          file: ./abis/RewardsManager.json
-      eventHandlers:
-        - event: RewardsAssigned(indexed address,indexed address,uint256,uint256)
-          handler: handleRewardsAssigned
+  # - kind: ethereum/contract
+  #   name: RewardsManager
+  #   network: mainnet
+  #   source:
+  #     address: "0x9Ac758AB77733b4150A901ebd659cbF8cB93ED66"
+  #     abi: RewardsManager
+  #     startBlock: 11446790
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.4
+  #     language: wasm/assemblyscript
+  #     file: ./src/mappings/rewardsManager.ts
+  #     entities:
+  #       - Indexer
+  #       - IndexerSnapshot
+  #     abis:
+  #       - name: RewardsManager
+  #         file: ./abis/RewardsManager.json
+  #     eventHandlers:
+  #       - event: RewardsAssigned(indexed address,indexed address,uint256,uint256)
+  #         handler: handleRewardsAssigned

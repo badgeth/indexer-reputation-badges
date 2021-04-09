@@ -1,0 +1,118 @@
+[
+  {
+    "inputs": [
+      { "internalType": "string", "name": "_queryURL", "type": "string" }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "badgeName",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "entity",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "property",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "preAwardValue",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "postAwardValue",
+        "type": "bool"
+      }
+    ],
+    "name": "BadgeDefinitionCreated",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "badgeRecipientCuration",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "badgeRecipientOracle",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "badgeName", "type": "string" },
+      { "internalType": "string", "name": "entity", "type": "string" },
+      { "internalType": "string", "name": "property", "type": "string" },
+      { "internalType": "bool", "name": "preAwardValue", "type": "bool" },
+      { "internalType": "bool", "name": "postAwardValue", "type": "bool" }
+    ],
+    "name": "createBadgeDefinition",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "governance",
+    "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "queryURL",
+    "outputs": [{ "internalType": "string", "name": "", "type": "string" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "curationAddress",
+        "type": "address"
+      }
+    ],
+    "name": "setBadgeRecipientCuration",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "address", "name": "oracleAddress", "type": "address" }
+    ],
+    "name": "setBadgeRecipientOracle",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "string", "name": "queryURLString", "type": "string" }
+    ],
+    "name": "setQueryURL",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
