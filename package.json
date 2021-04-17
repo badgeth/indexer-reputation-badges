@@ -29,6 +29,7 @@
     "mustache": "^4.2.0",
     "truffle": "^5.0.4",
     "truffle-contract": "^4.0.5",
-    "truffle-hdwallet-provider": "^1.0.4"
+    "truffle-hdwallet-provider": "^1.0.4",
+    "ts-node": "^9.1.1"
   }
 }
