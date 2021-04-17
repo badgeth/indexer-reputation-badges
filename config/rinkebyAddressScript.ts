@@ -2,6 +2,7 @@ import * as networkAddresses from "@graphprotocol/contracts/addresses.json";
 import * as fs from "fs";
 import * as mustache from "mustache";
 import { Addresses } from "./addresses.template";
+import * as BadgethAddresses from "./badgethAddresses.json"
 
 // mustache doesn't like numbered object keys
 let renameAddresses: any = networkAddresses;
@@ -21,6 +22,7 @@ export let addresses: Addresses = {
   ensPublicResolver: "{{rinkeby.IPublicResolver}}",
   blockNumber: "",
   network: "",
+  badgeFactory: BadgethAddresses.rinkeby.BadgeFactory,
 };
 
 const main = (): void => {
